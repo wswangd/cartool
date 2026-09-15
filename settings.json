@@ -1,0 +1,25 @@
+{
+  "bus": {
+    "backend": "zlg",
+    "device_type": 4,
+    "device_index": 0,
+    "channel": 0,
+    "timing0": 1,
+    "timing1": 28,
+    "mode": 0,
+    "acc_code": 0,
+    "acc_mask": 4294967295
+  },
+  "trace": {
+    "capacity": 100,
+    "autoscroll": true,
+    "direction": "全部"
+  },
+  "send": {
+    "period_ms": 100
+  },
+  "signal": {
+    "period_ms": 100
+  },
+  "geometry": "AdnQywADAAAAAAAA////+QAABP8AAAKfAAAAAAAAABUAAAPKAAACnQAAAAACAAAABQAAAAAAAAAAFwAABP8AAAKf"
+}

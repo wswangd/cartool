@@ -1,0 +1,92 @@
+{
+  "实验1": {
+    "period_ms": 100,
+    "signals": {
+      "转速": {
+        "enabled": true,
+        "value": 0,
+        "state": ""
+      },
+      "扭矩": {
+        "enabled": true,
+        "value": 0,
+        "state": ""
+      },
+      "车速": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "DPF温度": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "上游温度": {
+        "enabled": true,
+        "value": 0,
+        "state": ""
+      },
+      "下游温度": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "上游NOX": {
+        "enabled": false,
+        "value": 0,
+        "state": "正常"
+      },
+      "下游NOX": {
+        "enabled": false,
+        "value": 0,
+        "state": "正常"
+      },
+      "环境温度": {
+        "enabled": false,
+        "value": 25,
+        "state": ""
+      },
+      "大气压力": {
+        "enabled": false,
+        "value": 1000,
+        "state": ""
+      },
+      "冷却水温": {
+        "enabled": true,
+        "value": 25,
+        "state": ""
+      },
+      "尿素浓度": {
+        "enabled": false,
+        "value": 0,
+        "state": "正常"
+      },
+      "尿素温度": {
+        "enabled": false,
+        "value": 25,
+        "state": ""
+      },
+      "尿素液位": {
+        "enabled": false,
+        "value": 600,
+        "state": ""
+      },
+      "管路压力": {
+        "enabled": false,
+        "value": 600,
+        "state": ""
+      },
+      "尿素喷射量": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "排气流量": {
+        "enabled": true,
+        "value": 0,
+        "state": ""
+      }
+    }
+  }
+}
