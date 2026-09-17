@@ -12,7 +12,7 @@ from ..bus import BACKEND_SIM, BusBackend, BusConfig, create_bus
 from ..frame import CanFrame
 from ..storage import StorageError
 from ..worker import BusWorker
-from ..zlgcan_api import BAUD_OPTIONS, ZcanApi, ZlgError
+from ..zlgcan_api import ZcanApi, ZlgError
 from .device_panel import DevicePanel
 from .list_panel import ListPanel
 from .send_panel import SendPanel
@@ -128,7 +128,6 @@ class MainWindow(QMainWindow):
         self.signal_panel.start_requested.connect(self._on_signal_start)
         self.signal_panel.stop_requested.connect(self._on_signal_stop)
         self.signal_panel.values_changed.connect(self._on_signal_values)
-        self.signal_panel.device_change_requested.connect(self._on_signal_device)
         self.signal_panel.message.connect(self._show_message)
 
         clear_action = QAction("清空报文显示", self)
@@ -168,7 +167,6 @@ class MainWindow(QMainWindow):
         info = getattr(bus, "info", "")
         description = cfg.describe() + (f"   {info}" if info else "")
         self.device_panel.set_connected(True, description)
-        self.signal_panel.sync_device(cfg.device_index, cfg.baud)
         self._set_connected(True)
         self._show_message(f"已连接：{description}")
 
@@ -305,17 +303,8 @@ class MainWindow(QMainWindow):
                 self._worker.update_frame(uid, frame)
             else:
                 self._worker.start_periodic(uid, frame, period, 0)
+                self._signal_cycles.setdefault(can_id, period)
         self._signal_uids = list(wanted)
-
-    def _on_signal_device(self, index: int, baud_label: str) -> None:
-        if self._worker is not None:
-            cfg = self.device_panel.config()
-            self.signal_panel.sync_device(cfg.device_index, cfg.baud)
-            self._show_message("设备已连接，请断开后再修改索引或波特率")
-            return
-        self.device_panel.device_index.setValue(index)
-        if baud_label in BAUD_OPTIONS:
-            self.device_panel.baud.setCurrentText(baud_label)
 
     # -------------------------------------------------------------- 工作线程
 
@@ -392,14 +381,6 @@ class MainWindow(QMainWindow):
                 self.send_panel.period_ms.setValue(int(send["period_ms"]))
             except (TypeError, ValueError):
                 pass
-        signal = settings.get("signal", {})
-        if isinstance(signal, dict) and "period_ms" in signal:
-            try:
-                self.signal_panel.period.setValue(int(signal["period_ms"]))
-            except (TypeError, ValueError):
-                pass
-        cfg = self.device_panel.config()
-        self.signal_panel.sync_device(cfg.device_index, cfg.baud)
 
     def _save_settings(self) -> None:
         storage.save_settings({
@@ -410,7 +391,6 @@ class MainWindow(QMainWindow):
                 "direction": self.trace_panel.direction.currentText(),
             },
             "send": {"period_ms": self.send_panel.period_ms.value()},
-            "signal": {"period_ms": self.signal_panel.period.value()},
             "geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
         })
 

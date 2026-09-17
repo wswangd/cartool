@@ -88,5 +88,174 @@
         "state": ""
       }
     }
+  },
+  "实验2": {
+    "period_ms": 100,
+    "signals": {
+      "使能位": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "档位": {
+        "enabled": true,
+        "value": 4,
+        "state": "正常"
+      },
+      "油温": {
+        "enabled": false,
+        "value": 25,
+        "state": ""
+      },
+      "发动机转速": {
+        "enabled": true,
+        "value": 0,
+        "state": ""
+      },
+      "诊断码": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "序列号": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号7": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号8": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号9": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号10": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号11": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号12": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号13": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号14": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      },
+      "信号15": {
+        "enabled": false,
+        "value": 0,
+        "state": ""
+      }
+    }
+  },
+  "实验3": {
+    "signals": {
+      "转速": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "扭矩": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "车速": {
+        "enabled": false,
+        "value": 0.0,
+        "state": ""
+      },
+      "T5": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "T6": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "T7": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "上游NOx": {
+        "enabled": true,
+        "value": 0.0,
+        "state": "正常"
+      },
+      "下游NOx": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "环境温度": {
+        "enabled": false,
+        "value": 25.0,
+        "state": ""
+      },
+      "大气压力": {
+        "enabled": false,
+        "value": 100.0,
+        "state": ""
+      },
+      "冷却水温": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "尿素浓度": {
+        "enabled": true,
+        "value": 32.5,
+        "state": ""
+      },
+      "尿素温度": {
+        "enabled": true,
+        "value": 25.0,
+        "state": ""
+      },
+      "尿素液位": {
+        "enabled": true,
+        "value": 60.0,
+        "state": ""
+      },
+      "管路压力": {
+        "enabled": false,
+        "value": 0.0,
+        "state": ""
+      },
+      "尿素喷射量": {
+        "enabled": false,
+        "value": 0.0,
+        "state": ""
+      },
+      "排气流量": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      }
+    }
   }
 }

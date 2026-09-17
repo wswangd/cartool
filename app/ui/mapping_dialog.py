@@ -5,18 +5,71 @@ from __future__ import annotations
 import json
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QDialog,
                                QDoubleSpinBox, QFileDialog, QFormLayout,
                                QHeaderView, QHBoxLayout, QLabel, QLineEdit,
                                QMessageBox, QPushButton, QSpinBox, QTableWidget,
-                               QTableWidgetItem, QVBoxLayout)
+                               QTableWidgetItem, QVBoxLayout, QWidget)
 
 from .. import signals
 from ..signals import SignalDef, SignalState
 
 HEADERS = ("名称", "单位", "最小", "最大", "默认", "启用", "CAN ID(hex)", "扩展帧",
-           "起始bit", "长度(bit)", "字节序", "系数", "偏移", "编辑器", "状态(名=原始值)")
+           "起始bit", "长度(bit)", "字节顺序", "分辨率", "偏移", "类型", "状态(名=原始值)")
 CYCLE_HEADERS = ("CAN ID(hex)", "发送周期(ms)")
+DECIMAL_PLACES = 4          # 物理值/分辨率/偏移统一精确到小数点后 4 位
+MIN_DECIMAL_STEP = 0.0001   # 最小步进 1e-4，保证可精确输入到第 4 位小数
+
+
+class NoWheelSpinBox(QSpinBox):
+    """整数数值框：完全禁用滚轮，防止误触修改。
+
+    只能通过键盘输入、上下箭头或点击编辑来修改数值。
+    """
+
+    def wheelEvent(self, event) -> None:
+        event.ignore()
+
+
+class NoWheelDoubleSpinBox(QDoubleSpinBox):
+    """4 位小数值框：完全禁用滚轮，防止误触修改。"""
+
+    def wheelEvent(self, event) -> None:
+        event.ignore()
+
+
+class NoWheelComboBox(QComboBox):
+    """下拉菜单：完全禁用滚轮，防止误触修改。"""
+
+    def wheelEvent(self, event) -> None:
+        event.ignore()
+
+
+def make_decimal_spin(value: float, low: float = -1e9,
+                      high: float = 1e9) -> NoWheelDoubleSpinBox:
+    """构建统一的 4 位小数数值输入框。
+
+    - setDecimals(4)：界面固定显示 4 位小数（如 1.0000、-40.0000），格式统一；
+    - AdaptiveDecimalStepType：点击上下箭头时按光标所在位步进，最细到 0.0001；
+    - 键盘输入超过 4 位小数时自动四舍五入到第 4 位，保证精度口径一致；
+    - 完全禁用滚轮，防止误触修改。
+    """
+    spin = NoWheelDoubleSpinBox()
+    spin.setDecimals(DECIMAL_PLACES)
+    spin.setRange(low, high)
+    spin.setSingleStep(MIN_DECIMAL_STEP)
+    spin.setStepType(QDoubleSpinBox.AdaptiveDecimalStepType)
+    spin.setValue(float(value))
+    return spin
+
+
+def make_int_spin(value: int, low: int, high: int) -> NoWheelSpinBox:
+    """构建整数数值框；未聚焦时滚轮不改值。"""
+    spin = NoWheelSpinBox()
+    spin.setRange(low, high)
+    spin.setValue(int(value))
+    return spin
 
 
 class MappingDialog(QDialog):
@@ -35,19 +88,92 @@ class MappingDialog(QDialog):
                                 states=list(d.states)) for d in defs]
         self._cycles = dict(cycles) if cycles else {}
 
-        # --- 信号表 ---
-        self.table = QTableWidget(len(self._defs), len(HEADERS))
-        self.table.setHorizontalHeaderLabels(HEADERS)
-        self.table.verticalHeader().setVisible(False)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # --- 信号表（名称列锁定 + 数据列可滚动） ---
+        DATA_HEADERS = HEADERS[1:]  # 去掉"名称"
+
+        bold_font = QFont()
+        bold_font.setBold(True)
+
+        self.name_table = QTableWidget(len(self._defs), 1)
+        self.name_table.setHorizontalHeaderLabels(["名称"])
+        self.name_table.verticalHeader().setVisible(False)
+        self.name_table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeToContents)
+        self.name_table.horizontalHeader().setFont(bold_font)
+        self.name_table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # 垂直滚动条保留功能但隐藏外观，用于接收同步信号
+        self.name_table.verticalScrollBar().setStyleSheet(
+            "QScrollBar { width: 0px; }")
+        self.name_table.setEditTriggers(QAbstractItemView.AllEditTriggers)
+
+        self.data_table = QTableWidget(len(self._defs), len(DATA_HEADERS))
+        self.data_table.setHorizontalHeaderLabels(DATA_HEADERS)
+        self.data_table.verticalHeader().setVisible(False)
+        self.data_table.horizontalHeader().setFont(bold_font)
+        self.data_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.data_table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
         for row, sig in enumerate(self._defs):
             self._fill_row(row, sig)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.data_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeToContents)
+        self.data_table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.Stretch)
+        self.name_table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeToContents)
+        # 让名称表宽度精确匹配列宽
+        self.name_table.resizeColumnsToContents()
+        col_width = self.name_table.columnWidth(0)
+        self.name_table.setMaximumWidth(col_width + 4)
 
-        hint = QLabel("物理值 = 原始值 × 系数 + 偏移；状态列格式：故障=65533;开路=65534，"
-                      "不写原始值表示该状态仍用滑杆值。起始bit 范围 0-63。")
+        # 同步行高，确保两表行对齐
+        for row in range(self.data_table.rowCount()):
+            self.name_table.setRowHeight(row, self.data_table.rowHeight(row))
+
+        # 双向滚动同步，用标志位防止死循环
+        self._syncing_scroll = False
+
+        def _data_to_name(val: int) -> None:
+            if self._syncing_scroll:
+                return
+            self._syncing_scroll = True
+            self.name_table.verticalScrollBar().setValue(val)
+            self._syncing_scroll = False
+
+        def _name_to_data(val: int) -> None:
+            if self._syncing_scroll:
+                return
+            self._syncing_scroll = True
+            self.data_table.verticalScrollBar().setValue(val)
+            self._syncing_scroll = False
+
+        self.data_table.verticalScrollBar().valueChanged.connect(_data_to_name)
+        self.name_table.verticalScrollBar().valueChanged.connect(_name_to_data)
+
+        # 用零间距容器包裹两个表，消除间隔
+        # 名称表底部添加占位，高度等于数据表水平滚动条高度，保证两表可视区域等高
+        name_wrapper = QWidget()
+        name_layout = QVBoxLayout(name_wrapper)
+        name_layout.setContentsMargins(0, 0, 0, 0)
+        name_layout.setSpacing(0)
+        name_layout.addWidget(self.name_table, 1)
+        sb_height = self.data_table.horizontalScrollBar().height()
+        spacer = QWidget()
+        spacer.setFixedHeight(sb_height)
+        name_layout.addWidget(spacer)
+
+        tables_widget = QWidget()
+        tables_layout = QHBoxLayout(tables_widget)
+        tables_layout.setContentsMargins(0, 0, 0, 0)
+        tables_layout.setSpacing(0)
+        tables_layout.addWidget(name_wrapper)
+        tables_layout.addWidget(self.data_table, 1)
+
+        hint = QLabel('物理值 = 原始值 × 分辨率 + 偏移；最小/最大/默认/分辨率/偏移均精确到'
+                      '小数点后 4 位；状态列不写原始值表示该状态仍用滑杆值；状态支持字节覆盖'
+                      '语法：名称@bN=V 表示选中该状态时强制 byte N 写入值 V（如 内部故障@b5=3）。'
+                      '起始bit 范围 0-63。数值框已禁用滚轮，需点击选中后用键盘或上下箭头修改；'
+                      '回车不退出，完成后请点击\u201c确定\u201d保存，ESC 取消。')
         hint.setWordWrap(True)
 
         # --- 报文周期表 ---
@@ -84,16 +210,23 @@ class MappingDialog(QDialog):
         # --- 按钮 ---
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        ok = QPushButton("确定")
+        self.ok_btn = QPushButton("确定")
         cancel = QPushButton("取消")
-        ok.clicked.connect(self._on_accept)
+        self.ok_btn.clicked.connect(self._on_accept)
         cancel.clicked.connect(self.reject)
-        buttons.addWidget(ok)
+        buttons.addWidget(self.ok_btn)
         buttons.addWidget(cancel)
+
+        # 所有按钮都禁止成为对话框默认按钮：表格输入框中按回车不会触发任何按钮
+        # （不会误添加信号，也不会直接退出配置界面）；保存请点击"确定"，ESC 取消。
+        for btn in (self.add_btn, self.del_btn, self.up_btn, self.down_btn,
+                    self.import_btn, self.export_btn, self.ok_btn, cancel):
+            btn.setAutoDefault(False)
+            btn.setDefault(False)
 
         layout = QVBoxLayout(self)
         layout.addLayout(toolbar)
-        layout.addWidget(self.table)
+        layout.addWidget(tables_widget, 1)
         layout.addWidget(hint)
         layout.addWidget(cycle_label)
         layout.addWidget(self.cycle_table)
@@ -102,82 +235,69 @@ class MappingDialog(QDialog):
     # ------------------------------------------------------------------ 填充
 
     def _fill_row(self, row: int, sig: SignalDef) -> None:
-        set_cell = self.table.setCellWidget
-        set_cell(row, 0, QLineEdit(sig.name))
-        set_cell(row, 1, QLineEdit(sig.unit))
+        set_name = self.name_table.setCellWidget
+        set_cell = self.data_table.setCellWidget
+        set_name(row, 0, QLineEdit(sig.name))
+        set_cell(row, 0, QLineEdit(sig.unit))
 
-        spin_min = QSpinBox()
-        spin_min.setRange(-2000000000, 2000000000)
-        spin_min.setValue(sig.minimum)
-        set_cell(row, 2, spin_min)
-
-        spin_max = QSpinBox()
-        spin_max.setRange(-2000000000, 2000000000)
-        spin_max.setValue(sig.maximum)
-        set_cell(row, 3, spin_max)
-
-        spin_def = QSpinBox()
-        spin_def.setRange(-2000000000, 2000000000)
-        spin_def.setValue(sig.default)
-        set_cell(row, 4, spin_def)
+        set_cell(row, 1, make_decimal_spin(sig.minimum))
+        set_cell(row, 2, make_decimal_spin(sig.maximum))
+        set_cell(row, 3, make_decimal_spin(sig.default))
 
         check = QTableWidgetItem()
         check.setFlags(check.flags() | Qt.ItemIsUserCheckable)
         check.setCheckState(Qt.Checked if sig.enabled else Qt.Unchecked)
-        self.table.setItem(row, 5, check)
+        self.data_table.setItem(row, 4, check)
 
-        set_cell(row, 6, QLineEdit(f"{sig.can_id:X}"))
+        set_cell(row, 5, QLineEdit(f"{sig.can_id:X}"))
 
         ext = QTableWidgetItem()
         ext.setFlags(ext.flags() | Qt.ItemIsUserCheckable)
         ext.setCheckState(Qt.Checked if sig.extended else Qt.Unchecked)
-        self.table.setItem(row, 7, ext)
+        self.data_table.setItem(row, 6, ext)
 
-        spin_start = QSpinBox()
-        spin_start.setRange(0, 63)
-        spin_start.setValue(sig.start_bit)
-        set_cell(row, 8, spin_start)
+        set_cell(row, 7, make_int_spin(sig.start_bit, 0, 63))
+        set_cell(row, 8, make_int_spin(sig.bit_length,
+                                       signals.MIN_BIT_LENGTH,
+                                       signals.MAX_BIT_LENGTH))
 
-        spin_bits = QSpinBox()
-        spin_bits.setRange(signals.MIN_BIT_LENGTH, signals.MAX_BIT_LENGTH)
-        spin_bits.setValue(sig.bit_length)
-        set_cell(row, 9, spin_bits)
-
-        combo_order = QComboBox()
+        combo_order = NoWheelComboBox()
         combo_order.addItems(signals.BYTE_ORDERS)
         combo_order.setCurrentText(sig.byte_order)
-        set_cell(row, 10, combo_order)
+        set_cell(row, 9, combo_order)
 
-        spin_factor = QDoubleSpinBox()
-        spin_factor.setRange(-100000, 100000)
-        spin_factor.setDecimals(4)
-        spin_factor.setValue(sig.factor)
-        set_cell(row, 11, spin_factor)
+        set_cell(row, 10, make_decimal_spin(sig.factor, -100000, 100000))
+        set_cell(row, 11, make_decimal_spin(sig.offset, -1000000, 1000000))
 
-        spin_offset = QDoubleSpinBox()
-        spin_offset.setRange(-1000000, 1000000)
-        spin_offset.setDecimals(4)
-        spin_offset.setValue(sig.offset)
-        set_cell(row, 12, spin_offset)
-
-        combo_editor = QComboBox()
+        combo_editor = NoWheelComboBox()
         combo_editor.addItems(["数值", "状态"])
         combo_editor.setCurrentIndex(0 if sig.editor == "value" else 1)
-        set_cell(row, 13, combo_editor)
+        set_cell(row, 12, combo_editor)
 
-        states = ";".join(s.name if s.raw is None else f"{s.name}={s.raw}"
-                          for s in sig.states)
-        set_cell(row, 14, QLineEdit(states))
+        # 构建状态字符串，包含 byte_overrides
+        state_parts = []
+        for s in sig.states:
+            part = s.name
+            if s.raw is not None:
+                part += f"={s.raw}"
+            if s.byte_overrides:
+                overrides = ",".join(f"b{b}=0x{v:X}" for b, v in s.byte_overrides)
+                part += f"@{overrides}"
+            state_parts.append(part)
+        states = ";".join(state_parts)
+        set_cell(row, 13, QLineEdit(states))
 
     def _widget(self, row: int, col: int):
-        return self.table.cellWidget(row, col)
+        if col == 0:
+            return self.name_table.cellWidget(row, 0)
+        return self.data_table.cellWidget(row, col - 1)
 
     # ------------------------------------------------------------------ 周期表
 
     def _refresh_cycle_table(self) -> None:
         """从信号表收集所有 CAN ID，更新周期表。保留已设周期。"""
         can_ids: set[int] = set()
-        for row in range(self.table.rowCount()):
+        for row in range(self.data_table.rowCount()):
             try:
                 can_id_text = self._widget(row, 6).text().strip()
                 if can_id_text:
@@ -191,9 +311,7 @@ class MappingDialog(QDialog):
             id_edit = QLineEdit(f"{can_id:X}")
             id_edit.setReadOnly(True)
             self.cycle_table.setCellWidget(row, 0, id_edit)
-            spin_cycle = QSpinBox()
-            spin_cycle.setRange(10, 10000)
-            spin_cycle.setValue(self._cycles.get(can_id, 100))
+            spin_cycle = make_int_spin(self._cycles.get(can_id, 100), 10, 10000)
             spin_cycle.setSuffix(" ms")
             self.cycle_table.setCellWidget(row, 1, spin_cycle)
 
@@ -214,29 +332,37 @@ class MappingDialog(QDialog):
     # ------------------------------------------------------------------ 增删移
 
     def _on_add_signal(self) -> None:
-        row = self.table.rowCount()
-        self.table.insertRow(row)
+        row = self.data_table.rowCount()
+        self.name_table.insertRow(row)
+        self.data_table.insertRow(row)
         sig = SignalDef(name=f"信号{row + 1}", unit="", minimum=0, maximum=100,
                        default=0, enabled=False, can_id=0x100, start_bit=0,
                        bit_length=16, editor="value")
         self._fill_row(row, sig)
         self._refresh_cycle_table()
+        # 焦点移到新行名称输入框，避免焦点停留在按钮上时按回车重复添加
+        name_edit = self.name_table.cellWidget(row, 0)
+        if name_edit is not None:
+            name_edit.setFocus()
+            name_edit.selectAll()
 
     def _on_delete_signal(self) -> None:
-        rows = {idx.row() for idx in self.table.selectedIndexes()}
+        rows = {idx.row() for idx in self.data_table.selectedIndexes()}
         if not rows:
             QMessageBox.warning(self, "删除信号", "请先选中要删除的行")
             return
-        if self.table.rowCount() <= len(rows):
+        if self.data_table.rowCount() <= len(rows):
             QMessageBox.warning(self, "删除信号", "至少需要保留一路信号")
             return
         for row in sorted(rows, reverse=True):
-            self.table.removeRow(row)
+            self.name_table.removeRow(row)
+            self.data_table.removeRow(row)
         self._refresh_cycle_table()
+        self.data_table.setFocus()
 
     def _on_move_row(self, direction: int) -> None:
         """direction=-1 上移，+1 下移。支持连续多行整体移动。"""
-        rows = sorted({idx.row() for idx in self.table.selectedIndexes()})
+        rows = sorted({idx.row() for idx in self.data_table.selectedIndexes()})
         if not rows:
             QMessageBox.warning(self, "移动信号", "请先选中要移动的行")
             return
@@ -246,20 +372,18 @@ class MappingDialog(QDialog):
         target = rows[0] + direction
         if direction < 0 and target < 0:
             return  # 已在顶部
-        if direction > 0 and rows[-1] + 1 >= self.table.rowCount():
+        if direction > 0 and rows[-1] + 1 >= self.data_table.rowCount():
             return  # 已在底部
-        # 收集选中行和目标行的数据，重新填充
         defs_to_move = [self._collect_row_def(r) for r in rows]
-        # 删除原行（从大到小）
         for r in sorted(rows, reverse=True):
-            self.table.removeRow(r)
-        # 在目标位置插入
+            self.name_table.removeRow(r)
+            self.data_table.removeRow(r)
         for i, sig in enumerate(defs_to_move):
-            self.table.insertRow(target + i)
+            self.name_table.insertRow(target + i)
+            self.data_table.insertRow(target + i)
             self._fill_row(target + i, sig)
-        # 保持选中
         for i in range(len(defs_to_move)):
-            self.table.selectRow(target + i)
+            self.data_table.selectRow(target + i)
         self._refresh_cycle_table()
 
     # ------------------------------------------------------------------ 导入导出
@@ -284,11 +408,12 @@ class MappingDialog(QDialog):
         except (TypeError, ValueError) as exc:
             QMessageBox.warning(self, "导入失败", f"信号定义无效：{exc}")
             return
-        self.table.setRowCount(0)
+        self.name_table.setRowCount(0)
+        self.data_table.setRowCount(0)
         for row, sig in enumerate(defs):
-            self.table.insertRow(row)
+            self.name_table.insertRow(row)
+            self.data_table.insertRow(row)
             self._fill_row(row, sig)
-        # 导入 cycles
         raw_cycles = payload.get("cycles", {}) if isinstance(payload, dict) else {}
         self._cycles = {}
         for key, value in raw_cycles.items():
@@ -325,17 +450,53 @@ class MappingDialog(QDialog):
 
     @staticmethod
     def _parse_states(text: str) -> list[SignalState]:
+        """解析状态字符串，支持字节覆盖语法。
+
+        语法：
+          名称=原始值                    # 传统格式
+          名称@bN=V                      # 字节覆盖（bN 表示 byte N，V 为值）
+          名称=原始值@bN=V               # 组合：原始值 + 字节覆盖
+          名称@bN=V,bM=W                 # 多字节覆盖
+        示例：
+          正常;内部故障@b5=3;开路@b5=5
+        """
         states = []
         for token in text.replace("；", ";").split(";"):
             token = token.strip()
             if not token:
                 continue
-            name, _, raw = token.partition("=")
+            # 分离字节覆盖部分
+            name_part, _, override_part = token.partition("@")
+            name_part = name_part.strip()
+            override_part = override_part.strip()
+            # 解析原始值
+            name, _, raw = name_part.partition("=")
+            name = name.strip()
             raw = raw.strip()
             value = None
             if raw:
                 value = int(raw, 16) if raw.lower().startswith("0x") else int(raw)
-            states.append(SignalState(name.strip(), value))
+            # 解析字节覆盖
+            byte_overrides = []
+            if override_part:
+                for item in override_part.split(","):
+                    item = item.strip()
+                    if not item:
+                        continue
+                    # 格式：bN=V 或 bN=0xV
+                    if item.lower().startswith("b"):
+                        item = item[1:]  # 去掉 'b' 前缀
+                    byte_str, _, val_str = item.partition("=")
+                    byte_str = byte_str.strip()
+                    val_str = val_str.strip()
+                    if byte_str and val_str:
+                        try:
+                            byte_offset = int(byte_str)
+                            byte_value = int(val_str, 16) if val_str.lower().startswith("0x") else int(val_str)
+                            byte_overrides.append((byte_offset, byte_value))
+                        except (ValueError, TypeError):
+                            pass  # 忽略无效的覆盖
+            states.append(SignalState(name, value, byte_overrides))
         return states
 
     def _collect_row_def(self, row: int) -> SignalDef:
@@ -348,9 +509,9 @@ class MappingDialog(QDialog):
             minimum=self._widget(row, 2).value(),
             maximum=self._widget(row, 3).value(),
             default=self._widget(row, 4).value(),
-            enabled=self.table.item(row, 5).checkState() == Qt.Checked,
+            enabled=self.data_table.item(row, 4).checkState() == Qt.Checked,
             can_id=int(can_id_text, 16) if can_id_text else 0,
-            extended=self.table.item(row, 7).checkState() == Qt.Checked,
+            extended=self.data_table.item(row, 6).checkState() == Qt.Checked,
             start_bit=self._widget(row, 8).value(),
             bit_length=self._widget(row, 9).value(),
             byte_order=self._widget(row, 10).currentText(),
@@ -363,7 +524,7 @@ class MappingDialog(QDialog):
     def _collect_defs(self) -> list[SignalDef] | None:
         """解析当前表格内容，校验失败返回 None。"""
         parsed: list[SignalDef] = []
-        for row in range(self.table.rowCount()):
+        for row in range(self.data_table.rowCount()):
             try:
                 sig = self._collect_row_def(row)
             except (ValueError, TypeError) as exc:

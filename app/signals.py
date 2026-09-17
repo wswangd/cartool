@@ -1,6 +1,6 @@
 """信号级实验定义：物理值 ↔ CAN 原始值 ↔ 报文的打包规则。
 
-信号与报文的对应关系（CAN ID、起始bit、长度、字节序、系数/偏移）全部来自
+信号与报文的对应关系（CAN ID、起始bit、长度、字节序、分辨率/偏移）全部来自
 signals.json，可用界面里的"映射配置"修改；文件不存在时生成内置默认表。
 """
 
@@ -27,24 +27,42 @@ NORMAL_STATE = "正常"
 class SignalState:
     name: str
     raw: int | None = None      # None 表示该状态下仍使用滑杆值
+    # 字节覆盖：选中此状态时，强制向帧的指定字节写入指定值
+    # 格式：[(byte_offset, value), ...]，byte_offset 为帧内字节索引 0-7
+    byte_overrides: list[tuple[int, int]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "raw": self.raw}
+        d = {"name": self.name, "raw": self.raw}
+        if self.byte_overrides:
+            # 序列化为 [[byte_offset, value], ...] 格式
+            d["byte_overrides"] = [[b, v] for b, v in self.byte_overrides]
+        return d
 
     @classmethod
     def from_dict(cls, raw: dict) -> "SignalState":
         value = raw.get("raw")
+        # 解析 byte_overrides
+        byte_overrides = []
+        raw_overrides = raw.get("byte_overrides", [])
+        if isinstance(raw_overrides, list):
+            for item in raw_overrides:
+                if isinstance(item, (list, tuple)) and len(item) == 2:
+                    try:
+                        byte_overrides.append((int(item[0]), int(item[1])))
+                    except (TypeError, ValueError):
+                        pass
         return cls(name=str(raw.get("name", NORMAL_STATE)),
-                   raw=None if value in (None, "") else int(value))
+                   raw=None if value in (None, "") else int(value),
+                   byte_overrides=byte_overrides)
 
 
 @dataclass
 class SignalDef:
     name: str
     unit: str
-    minimum: int
-    maximum: int
-    default: int
+    minimum: float
+    maximum: float
+    default: float
     enabled: bool
     can_id: int
     extended: bool = False
@@ -57,6 +75,10 @@ class SignalDef:
     states: list[SignalState] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        # 物理值统一按浮点处理，支持小数；同时保持纯整数场景的 JSON 整洁
+        self.minimum = float(self.minimum)
+        self.maximum = float(self.maximum)
+        self.default = float(self.default)
         self.validate()
 
     # ------------------------------------------------------------------ 校验
@@ -66,6 +88,8 @@ class SignalDef:
             raise ValueError("信号名称不能为空")
         if self.minimum > self.maximum:
             raise ValueError(f"{self.name}: 最小值不能大于最大值")
+        if not self.minimum <= self.default <= self.maximum:
+            raise ValueError(f"{self.name}: 默认值必须在最小/最大值之间")
         if not MIN_BIT_LENGTH <= self.bit_length <= MAX_BIT_LENGTH:
             raise ValueError(f"{self.name}: 长度只能在 {MIN_BIT_LENGTH}-{MAX_BIT_LENGTH} 之间")
         if not 0 <= self.start_bit <= 63:
@@ -77,7 +101,7 @@ class SignalDef:
         if self.editor not in EDITORS:
             raise ValueError(f"{self.name}: 编辑器类型只能是 {EDITORS}")
         if not self.factor:
-            raise ValueError(f"{self.name}: 系数不能为 0")
+            raise ValueError(f"{self.name}: 分辨率不能为 0")
         if not 0 <= self.can_id <= (0x1FFFFFFF if self.extended else 0x7FF):
             raise ValueError(f"{self.name}: CAN ID 超出帧格式范围")
 
@@ -102,15 +126,21 @@ class SignalDef:
 
     # ------------------------------------------------------------------ 序列化
 
+    @staticmethod
+    def _num(value: float) -> float | int:
+        """整数值的浮点量以 int 输出，保持 JSON 整洁（100.0 -> 100）。"""
+        return int(value) if float(value).is_integer() else float(value)
+
     def to_dict(self) -> dict:
         return {
             "name": self.name, "unit": self.unit,
-            "min": self.minimum, "max": self.maximum,
-            "default": self.default, "enabled": self.enabled,
+            "min": self._num(self.minimum), "max": self._num(self.maximum),
+            "default": self._num(self.default), "enabled": self.enabled,
             "can_id": f"{self.can_id:X}", "extended": self.extended,
             "start_bit": self.start_bit, "bit_length": self.bit_length,
-            "byte_order": self.byte_order, "factor": self.factor,
-            "offset": self.offset, "editor": self.editor,
+            "byte_order": self.byte_order,
+            "factor": self._num(self.factor), "offset": self._num(self.offset),
+            "editor": self.editor,
             "states": [s.to_dict() for s in self.states],
         }
 
@@ -125,9 +155,9 @@ class SignalDef:
         return cls(
             name=str(raw.get("name", "")).strip(),
             unit=str(raw.get("unit", "")),
-            minimum=int(raw.get("min", 0)),
-            maximum=int(raw.get("max", 100)),
-            default=int(raw.get("default", 0)),
+            minimum=float(raw.get("min", 0)),
+            maximum=float(raw.get("max", 100)),
+            default=float(raw.get("default", 0)),
             enabled=bool(raw.get("enabled", True)),
             can_id=int(str(raw.get("can_id", "0")), 16),
             extended=bool(raw.get("extended", False)),
@@ -143,8 +173,12 @@ class SignalDef:
 
 # ---------------------------------------------------------------------- 打包
 
-def pack_frames(defs: list[SignalDef], raws: dict[str, int]) -> list[CanFrame]:
-    """把已启用信号的原始值按 CAN ID 分组装进 8 字节报文。"""
+def pack_frames(defs: list[SignalDef], raws: dict[str, int],
+                active_states: dict[str, SignalState] | None = None) -> list[CanFrame]:
+    """把已启用信号的原始值按 CAN ID 分组装进 8 字节报文。
+
+    active_states: 信号名 → 当前激活状态的映射，用于应用 byte_overrides。
+    """
     groups: dict[tuple[int, bool], bytearray] = {}
     for sig in defs:
         raw = raws.get(sig.name)
@@ -152,6 +186,16 @@ def pack_frames(defs: list[SignalDef], raws: dict[str, int]) -> list[CanFrame]:
             continue
         buffer = groups.setdefault((sig.can_id, sig.extended), bytearray(8))
         _put_raw(buffer, sig, raw)
+    # 应用字节覆盖：遍历所有启用信号，如果其激活状态有 byte_overrides，则写入
+    if active_states:
+        for sig in defs:
+            state = active_states.get(sig.name)
+            if state and state.byte_overrides:
+                buffer = groups.get((sig.can_id, sig.extended))
+                if buffer is not None:
+                    for byte_offset, value in state.byte_overrides:
+                        if 0 <= byte_offset < 8:
+                            buffer[byte_offset] = value & 0xFF
     return [CanFrame(frame_id=can_id, data=bytes(buffer), dlc=8, extended=extended)
             for (can_id, extended), buffer in sorted(groups.items())]
 

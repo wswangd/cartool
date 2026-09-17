@@ -4,7 +4,7 @@
     "device_type": 4,
     "device_index": 0,
     "channel": 0,
-    "timing0": 1,
+    "timing0": 0,
     "timing1": 28,
     "mode": 0,
     "acc_code": 0,
@@ -18,8 +18,5 @@
   "send": {
     "period_ms": 100
   },
-  "signal": {
-    "period_ms": 100
-  },
-  "geometry": "AdnQywADAAAAAAAA////+QAABP8AAAKfAAAAAAAAABUAAAPKAAACnQAAAAACAAAABQAAAAAAAAAAFwAABP8AAAKf"
+  "geometry": "AdnQywADAAAAAAAA////+QAABP8AAAKfAAAAAAAAABUAAAPMAAACnQAAAAACAAAABQAAAAAAAAAAFwAABP8AAAKf"
 }
