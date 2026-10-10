@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import threading
 from ctypes import (Structure, Union, WinDLL, byref, c_int, c_ubyte, c_uint,
                     c_ulonglong, c_ushort, c_void_p)
@@ -15,7 +16,12 @@ from typing import Sequence
 
 from .frame import CanFrame, DLC_MAX
 
-LIB_DIR = Path(__file__).resolve().parent.parent / "lib"
+# 打包成 exe 后，lib 目录作为只读资源被 PyInstaller 释放到 _internal/lib；
+# 开发时放在项目根目录。
+if getattr(sys, "frozen", False):
+    LIB_DIR = Path(sys._MEIPASS).resolve() / "lib"
+else:
+    LIB_DIR = Path(__file__).resolve().parent.parent / "lib"
 DLL_PATH = LIB_DIR / "zlgcan.dll"
 
 STATUS_OK = 1

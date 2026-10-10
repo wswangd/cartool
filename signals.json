@@ -42,10 +42,10 @@
       "min": 0,
       "max": 251,
       "default": 0,
-      "enabled": false,
-      "can_id": "18FEF100",
+      "enabled": true,
+      "can_id": "CFE6CEE",
       "extended": true,
-      "start_bit": 8,
+      "start_bit": 48,
       "bit_length": 16,
       "byte_order": "Intel",
       "factor": 0.0039,
@@ -59,7 +59,7 @@
       "min": -273,
       "max": 1734,
       "default": 0,
-      "enabled": true,
+      "enabled": false,
       "can_id": "18FD2000",
       "extended": true,
       "start_bit": 16,
@@ -79,7 +79,7 @@
       "enabled": true,
       "can_id": "14FD3E00",
       "extended": true,
-      "start_bit": 8,
+      "start_bit": 0,
       "bit_length": 16,
       "byte_order": "Intel",
       "factor": 0.0312,
@@ -93,10 +93,10 @@
       "min": -273,
       "max": 1734,
       "default": 0,
-      "enabled": true,
+      "enabled": false,
       "can_id": "14FD3E00",
       "extended": true,
-      "start_bit": 32,
+      "start_bit": 24,
       "bit_length": 16,
       "byte_order": "Intel",
       "factor": 0.0312,
@@ -110,7 +110,7 @@
       "min": 0,
       "max": 3012,
       "default": 0,
-      "enabled": true,
+      "enabled": false,
       "can_id": "18F00E51",
       "extended": true,
       "start_bit": 0,
@@ -142,7 +142,7 @@
       "min": 0,
       "max": 3012,
       "default": 0,
-      "enabled": true,
+      "enabled": false,
       "can_id": "18F00F52",
       "extended": true,
       "start_bit": 0,
@@ -150,7 +150,7 @@
       "byte_order": "Intel",
       "factor": 0.05,
       "offset": -200,
-      "editor": "value",
+      "editor": "state",
       "states": [
         {
           "name": "正常",
@@ -174,16 +174,301 @@
       "min": -273,
       "max": 1734,
       "default": 25,
-      "enabled": false,
+      "enabled": true,
       "can_id": "18FEF500",
       "extended": true,
-      "start_bit": 32,
+      "start_bit": 24,
       "bit_length": 16,
+      "byte_order": "Intel",
+      "factor": 0.0312,
+      "offset": -273,
+      "editor": "value",
+      "states": []
+    },
+    {
+      "name": "冷却水温",
+      "unit": "℃",
+      "min": -40,
+      "max": 210,
+      "default": 25,
+      "enabled": true,
+      "can_id": "18FEEE00",
+      "extended": true,
+      "start_bit": 0,
+      "bit_length": 8,
+      "byte_order": "Intel",
+      "factor": 1,
+      "offset": -40,
+      "editor": "value",
+      "states": []
+    },
+    {
+      "name": "尿素浓度",
+      "unit": "%",
+      "min": 0,
+      "max": 62.5,
+      "default": 32.5,
+      "enabled": false,
+      "can_id": "18FD9BA3",
+      "extended": true,
+      "start_bit": 8,
+      "bit_length": 8,
+      "byte_order": "Intel",
+      "factor": 0.25,
+      "offset": 0,
+      "editor": "state",
+      "states": [
+        {
+          "name": "正常",
+          "raw": null
+        },
+        {
+          "name": "组件开路",
+          "raw": null,
+          "byte_overrides": [
+            [
+              1,
+              254
+            ],
+            [
+              4,
+              3
+            ]
+          ]
+        },
+        {
+          "name": "组件短路",
+          "raw": null,
+          "byte_overrides": [
+            [
+              1,
+              254
+            ],
+            [
+              4,
+              4
+            ]
+          ]
+        },
+        {
+          "name": "温度超高限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              3,
+              3
+            ]
+          ]
+        },
+        {
+          "name": "温度超低限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        },
+        {
+          "name": "温度不可信",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              1,
+              254
+            ],
+            [
+              3,
+              2
+            ],
+            [
+              4,
+              2
+            ],
+            [
+              5,
+              14
+            ]
+          ]
+        },
+        {
+          "name": "内部失效",
+          "raw": null,
+          "byte_overrides": [
+            [
+              1,
+              251
+            ],
+            [
+              3,
+              31
+            ],
+            [
+              4,
+              31
+            ],
+            [
+              5,
+              12
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "尿素温度",
+      "unit": "℃",
+      "min": -40,
+      "max": 210,
+      "default": 25,
+      "enabled": false,
+      "can_id": "18FE56A3",
+      "extended": true,
+      "start_bit": 8,
+      "bit_length": 8,
       "byte_order": "Intel",
       "factor": 1,
       "offset": 0,
-      "editor": "value",
-      "states": []
+      "editor": "state",
+      "states": [
+        {
+          "name": "正常",
+          "raw": null
+        },
+        {
+          "name": "超高限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              1,
+              254
+            ],
+            [
+              5,
+              3
+            ]
+          ]
+        },
+        {
+          "name": "超低限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              1,
+              254
+            ],
+            [
+              5,
+              4
+            ]
+          ]
+        },
+        {
+          "name": "不可信",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              1,
+              254
+            ],
+            [
+              3,
+              254
+            ],
+            [
+              4,
+              2
+            ],
+            [
+              5,
+              2
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "尿素液位",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "default": 60,
+      "enabled": false,
+      "can_id": "18FE56A3",
+      "extended": true,
+      "start_bit": 0,
+      "bit_length": 8,
+      "byte_order": "Intel",
+      "factor": 0.4,
+      "offset": 0,
+      "editor": "state",
+      "states": [
+        {
+          "name": "正常",
+          "raw": null
+        },
+        {
+          "name": "超高限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              2,
+              255
+            ],
+            [
+              3,
+              254
+            ],
+            [
+              4,
+              3
+            ]
+          ]
+        },
+        {
+          "name": "超低限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              0,
+              254
+            ],
+            [
+              2,
+              255
+            ],
+            [
+              3,
+              254
+            ],
+            [
+              4,
+              4
+            ]
+          ]
+        }
+      ]
     },
     {
       "name": "大气压力",
@@ -203,108 +488,6 @@
       "states": []
     },
     {
-      "name": "冷却水温",
-      "unit": "℃",
-      "min": -40,
-      "max": 210,
-      "default": 0,
-      "enabled": true,
-      "can_id": "18FEEE00",
-      "extended": true,
-      "start_bit": 0,
-      "bit_length": 8,
-      "byte_order": "Intel",
-      "factor": 1,
-      "offset": -40,
-      "editor": "value",
-      "states": []
-    },
-    {
-      "name": "尿素浓度",
-      "unit": "%",
-      "min": 0,
-      "max": 62.5,
-      "default": 32.5,
-      "enabled": true,
-      "can_id": "18FD9BA3",
-      "extended": true,
-      "start_bit": 8,
-      "bit_length": 8,
-      "byte_order": "Intel",
-      "factor": 0.25,
-      "offset": 0,
-      "editor": "value",
-      "states": []
-    },
-    {
-      "name": "尿素温度",
-      "unit": "℃",
-      "min": -40,
-      "max": 210,
-      "default": 25,
-      "enabled": true,
-      "can_id": "18FE56A3",
-      "extended": true,
-      "start_bit": 8,
-      "bit_length": 8,
-      "byte_order": "Intel",
-      "factor": 1,
-      "offset": 0,
-      "editor": "value",
-      "states": []
-    },
-    {
-      "name": "尿素液位",
-      "unit": "%",
-      "min": 0,
-      "max": 100,
-      "default": 60,
-      "enabled": true,
-      "can_id": "18FE56A3",
-      "extended": true,
-      "start_bit": 0,
-      "bit_length": 8,
-      "byte_order": "Intel",
-      "factor": 0.4,
-      "offset": 0,
-      "editor": "value",
-      "states": []
-    },
-    {
-      "name": "管路压力",
-      "unit": "",
-      "min": 0,
-      "max": 100,
-      "default": 0,
-      "enabled": false,
-      "can_id": "100",
-      "extended": true,
-      "start_bit": 0,
-      "bit_length": 16,
-      "byte_order": "Intel",
-      "factor": 1,
-      "offset": 0,
-      "editor": "value",
-      "states": []
-    },
-    {
-      "name": "尿素喷射量",
-      "unit": "",
-      "min": 0,
-      "max": 100,
-      "default": 0,
-      "enabled": false,
-      "can_id": "100",
-      "extended": true,
-      "start_bit": 0,
-      "bit_length": 16,
-      "byte_order": "Intel",
-      "factor": 1,
-      "offset": 0,
-      "editor": "value",
-      "states": []
-    },
-    {
       "name": "排气流量",
       "unit": "kg/h",
       "min": 0,
@@ -314,26 +497,85 @@
       "can_id": "18FEDF00",
       "extended": true,
       "start_bit": 40,
-      "bit_length": 8,
+      "bit_length": 16,
       "byte_order": "Intel",
       "factor": 0.2,
+      "offset": 0,
+      "editor": "value",
+      "states": []
+    },
+    {
+      "name": "管路压力",
+      "unit": "kpa",
+      "min": 0,
+      "max": 1500,
+      "default": 600,
+      "enabled": false,
+      "can_id": "18FE56A3",
+      "extended": true,
+      "start_bit": 48,
+      "bit_length": 8,
+      "byte_order": "Intel",
+      "factor": 9.8,
+      "offset": -500,
+      "editor": "state",
+      "states": [
+        {
+          "name": "正常",
+          "raw": null
+        },
+        {
+          "name": "超高限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              6,
+              255
+            ]
+          ]
+        },
+        {
+          "name": "超低限",
+          "raw": null,
+          "byte_overrides": [
+            [
+              6,
+              0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "尿素喷射量",
+      "unit": "0.3g/h",
+      "min": 0,
+      "max": 10000,
+      "default": 0,
+      "enabled": false,
+      "can_id": "CF02400",
+      "extended": true,
+      "start_bit": 0,
+      "bit_length": 16,
+      "byte_order": "Intel",
+      "factor": 1,
       "offset": 0,
       "editor": "value",
       "states": []
     }
   ],
   "cycles": {
-    "100": 50,
-    "CF00400": 200,
+    "CF00400": 10,
+    "CF02400": 1000,
+    "CFE6CEE": 50,
     "14FD3E00": 500,
-    "18F00E51": 100,
-    "18F00F52": 100,
-    "18FD2000": 100,
-    "18FD9BA3": 100,
-    "18FE56A3": 100,
-    "18FEDF00": 100,
-    "18FEEE00": 100,
-    "18FEF100": 100,
-    "18FEF500": 100
+    "18F00E51": 50,
+    "18F00F52": 50,
+    "18FD2000": 500,
+    "18FD9BA3": 1000,
+    "18FE56A3": 1000,
+    "18FEDF00": 250,
+    "18FEEE00": 1000,
+    "18FEF500": 1000
   }
 }

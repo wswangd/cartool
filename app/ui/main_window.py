@@ -270,7 +270,7 @@ class MainWindow(QMainWindow):
                          cycles: dict[int, int]) -> None:
         if self._worker is None:
             self.signal_panel.set_running(False)
-            self._show_message("请先打开设备")
+            QMessageBox.warning(self, "提示", "请先打开设备")
             return
         self._signal_cycles = cycles
         self._signal_uids = [SIGNAL_UID_BASE + frame.frame_id for frame in frames]

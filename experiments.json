@@ -257,5 +257,94 @@
         "state": ""
       }
     }
+  },
+  "实验4": {
+    "signals": {
+      "转速": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "扭矩": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "车速": {
+        "enabled": false,
+        "value": 0.0,
+        "state": ""
+      },
+      "T5": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "T6": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "T7": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "上游NOx": {
+        "enabled": true,
+        "value": 0.0,
+        "state": "正常"
+      },
+      "下游NOx": {
+        "enabled": true,
+        "value": 0.0,
+        "state": "正常"
+      },
+      "环境温度": {
+        "enabled": true,
+        "value": 25.0,
+        "state": ""
+      },
+      "冷却水温": {
+        "enabled": true,
+        "value": 25.0,
+        "state": ""
+      },
+      "尿素浓度": {
+        "enabled": true,
+        "value": 32.5,
+        "state": "正常"
+      },
+      "尿素温度": {
+        "enabled": true,
+        "value": 25.0,
+        "state": "正常"
+      },
+      "尿素液位": {
+        "enabled": true,
+        "value": 60.0,
+        "state": "正常"
+      },
+      "大气压力": {
+        "enabled": true,
+        "value": 100.0,
+        "state": ""
+      },
+      "排气流量": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      },
+      "管路压力": {
+        "enabled": true,
+        "value": 600.0,
+        "state": "正常"
+      },
+      "尿素喷射量": {
+        "enabled": true,
+        "value": 0.0,
+        "state": ""
+      }
+    }
   }
 }

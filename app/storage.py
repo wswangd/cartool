@@ -4,12 +4,18 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 
 from .frame import (SEND_TYPE_OPTIONS, TRACE_HEADERS, CanFrame, FrameFormatError,
                     SendItem, TraceRecord, format_data, parse_data, parse_id)
 
-APP_DIR = Path(__file__).resolve().parent.parent
+# 打包成 exe 后，可写配置文件（settings.json 等）放在 exe 同级目录；
+# 开发时放在项目根目录（app 的上一层）。
+if getattr(sys, "frozen", False):
+    APP_DIR = Path(sys.executable).resolve().parent
+else:
+    APP_DIR = Path(__file__).resolve().parent.parent
 SETTINGS_PATH = APP_DIR / "settings.json"
 FILE_VERSION = 1
 

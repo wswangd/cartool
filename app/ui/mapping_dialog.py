@@ -180,6 +180,7 @@ class MappingDialog(QDialog):
         self.cycle_table = QTableWidget(0, len(CYCLE_HEADERS))
         self.cycle_table.setHorizontalHeaderLabels(CYCLE_HEADERS)
         self.cycle_table.verticalHeader().setVisible(False)
+        self.cycle_table.horizontalHeader().setFont(bold_font)
         self.cycle_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self._refresh_cycle_table()
 
@@ -249,7 +250,12 @@ class MappingDialog(QDialog):
         check.setCheckState(Qt.Checked if sig.enabled else Qt.Unchecked)
         self.data_table.setItem(row, 4, check)
 
-        set_cell(row, 5, QLineEdit(f"{sig.can_id:X}"))
+        can_id_edit = QLineEdit(f"{sig.can_id:X}")
+        can_id_edit.setPlaceholderText("如 1A2")
+        can_id_edit._last_can_id = sig.can_id  # 记录上次生效的 CAN ID
+        can_id_edit.editingFinished.connect(
+            lambda e=can_id_edit, r=row: self._on_can_id_edited(e, r))
+        set_cell(row, 5, can_id_edit)
 
         ext = QTableWidgetItem()
         ext.setFlags(ext.flags() | Qt.ItemIsUserCheckable)
@@ -293,6 +299,56 @@ class MappingDialog(QDialog):
         return self.data_table.cellWidget(row, col - 1)
 
     # ------------------------------------------------------------------ 周期表
+
+    def _on_can_id_edited(self, edit: QLineEdit, row: int) -> None:
+        """CAN ID 输入框编辑完成后：小写自动转大写，并同步更新周期表。"""
+        text = edit.text().strip()
+        old_id: int | None = getattr(edit, "_last_can_id", None)
+
+        if not text:
+            if old_id is not None:
+                edit.setText(f"{old_id:X}")
+            return
+
+        # 小写自动转大写
+        upper = text.upper()
+        if upper != text:
+            edit.setText(upper)
+
+        # 校验十六进制格式
+        try:
+            new_id = int(upper, 16)
+        except ValueError:
+            QMessageBox.warning(
+                self, "CAN ID 无效",
+                f"\u201c{upper}\u201d 不是有效的十六进制数")
+            if old_id is not None:
+                edit.setText(f"{old_id:X}")
+            return
+
+        # 检查是否与其他行重复
+        for r in range(self.data_table.rowCount()):
+            if r == row:
+                continue
+            other_text = self._widget(r, 6).text().strip()
+            if other_text:
+                try:
+                    if int(other_text, 16) == new_id:
+                        QMessageBox.warning(
+                            self, "CAN ID 重复",
+                            f"ID \u201c{new_id:X}\u201d 已被第 {r + 1} 行使用")
+                        edit.setText(f"{old_id:X}" if old_id is not None
+                                     else "")
+                        return
+                except ValueError:
+                    continue
+
+        # 将旧 ID 的周期迁移到新 ID
+        if old_id is not None and old_id != new_id:
+            if old_id in self._cycles:
+                self._cycles[new_id] = self._cycles.pop(old_id)
+        edit._last_can_id = new_id
+        self._refresh_cycle_table()
 
     def _refresh_cycle_table(self) -> None:
         """从信号表收集所有 CAN ID，更新周期表。保留已设周期。"""
