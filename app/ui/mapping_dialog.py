@@ -25,8 +25,13 @@ MIN_DECIMAL_STEP = 0.0001   # 最小步进 1e-4，保证可精确输入到第 4 
 class NoWheelSpinBox(QSpinBox):
     """整数数值框：完全禁用滚轮，防止误触修改。
 
-    只能通过键盘输入、上下箭头或点击编辑来修改数值。
+    只能通过键盘输入或点击编辑来修改数值。
     """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # 移除上下按钮，只支持手动输入
+        self.setButtonSymbols(QSpinBox.NoButtons)
 
     def wheelEvent(self, event) -> None:
         event.ignore()
@@ -34,6 +39,11 @@ class NoWheelSpinBox(QSpinBox):
 
 class NoWheelDoubleSpinBox(QDoubleSpinBox):
     """4 位小数值框：完全禁用滚轮，防止误触修改。"""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # 移除上下按钮，只支持手动输入
+        self.setButtonSymbols(QDoubleSpinBox.NoButtons)
 
     def wheelEvent(self, event) -> None:
         event.ignore()

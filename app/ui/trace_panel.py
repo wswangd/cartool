@@ -84,9 +84,9 @@ class TracePanel(QWidget):
         self.table.setEditTriggers(QTableView.NoEditTriggers)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Interactive)
-        header.setSectionResizeMode(7, QHeaderView.Stretch)
-        for column, width in ((0, 66), (1, 96), (2, 48), (3, 66), (4, 66),
-                              (5, 92), (6, 48), (8, 120)):
+        header.setSectionResizeMode(8, QHeaderView.Stretch)
+        for column, width in ((0, 66), (1, 96), (2, 92), (3, 48), (4, 66),
+                              (5, 66), (6, 96), (7, 48)):
             header.resizeSection(column, width)
         font = self.table.font()
         font.setFamily("Consolas")

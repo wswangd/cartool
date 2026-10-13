@@ -241,8 +241,8 @@ class SendListModel(QAbstractTableModel):
 
 # ----------------------------------------------------------------- 报文显示
 
-TRACE_HEADERS = ("序号", "时间", "方向", "帧格式", "帧类型", "ID(hex)", "长度",
-                 "数据(hex)", "设备时间戳(us)")
+TRACE_HEADERS = ("序号", "时间", "设备时间戳(us)", "方向", "帧格式", "帧类型", "ID(hex)", "长度",
+                 "数据(hex)")
 
 _COLOR_TX = QColor("#1565C0")
 _COLOR_RX = QColor("#1B1B1B")
@@ -326,7 +326,7 @@ class TraceModel(QAbstractTableModel):
                 return QBrush(_COLOR_ERR)
             return QBrush(_COLOR_TX if record.direction == TX else _COLOR_RX)
         if role == Qt.TextAlignmentRole:
-            return int(Qt.AlignCenter) if col != 7 else None
+            return int(Qt.AlignCenter) if col != 8 else None
         if role != Qt.DisplayRole:
             return None
 
@@ -335,17 +335,17 @@ class TraceModel(QAbstractTableModel):
         if col == 1:
             return record.time_text
         if col == 2:
-            return record.direction
-        if col == 3:
-            return frame.format_text
-        if col == 4:
-            return "错误帧" if record.error else frame.type_text
-        if col == 5:
-            return format_id(frame.frame_id, frame.extended)
-        if col == 6:
-            return str(frame.dlc)
-        if col == 7:
-            return format_data(frame.payload) if not frame.remote else ""
-        if col == 8:
             return str(record.dev_timestamp) if record.dev_timestamp else ""
+        if col == 3:
+            return record.direction
+        if col == 4:
+            return frame.format_text
+        if col == 5:
+            return "错误帧" if record.error else frame.type_text
+        if col == 6:
+            return format_id(frame.frame_id, frame.extended)
+        if col == 7:
+            return str(frame.dlc)
+        if col == 8:
+            return format_data(frame.payload) if not frame.remote else ""
         return None

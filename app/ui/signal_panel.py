@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import csv
-import os
-
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox,
-                               QFileDialog, QGridLayout, QHBoxLayout, QLabel,
+                               QGridLayout, QHBoxLayout, QLabel,
                                QMessageBox, QPushButton, QScrollArea,
                                QSlider, QVBoxLayout, QWidget)
 
@@ -16,7 +13,7 @@ from ..frame import CanFrame
 from ..signals import SignalDef
 from .mapping_dialog import MappingDialog, make_decimal_spin
 
-SLIDER_HEIGHT = 90
+SLIDER_WIDTH = 200
 EMIT_DELAY_MS = 120
 PERIOD_DEFAULT_MS = 100   # 映射配置中未设置周期的 CAN ID 的兜底周期
 SLIDER_INT_LIMIT = 2_000_000_000  # QSlider 为 int32，缩放后范围钳制
@@ -64,7 +61,7 @@ def _nice_tick_interval(total_range: int, step: int) -> int:
 
 
 class NoWheelSlider(QSlider):
-    """垂直滑杆：仅在获得焦点（点击选中）后滚轮才改值，防止悬停误触。"""
+    """水平滑杆：仅在获得焦点（点击选中）后滚轮才改值，防止悬停误触。"""
 
     def wheelEvent(self, event) -> None:
         if self.hasFocus():
@@ -81,6 +78,10 @@ class ValueComboBox(QComboBox):
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
         self._hide_callback = None
+
+    def wheelEvent(self, event) -> None:
+        """禁用鼠标滚轮，防止误触修改。"""
+        event.ignore()
 
     def hidePopup(self) -> None:
         if self._hide_callback:
@@ -105,8 +106,14 @@ class _Column:
                             _decimal_places(sig.default), 4)
 
         self.widget = QWidget()
+        self.widget.setStyleSheet(
+            "QWidget { background: #F0F0F0; }"
+            "QDoubleSpinBox { background: white; }"
+            "QComboBox { background: white; }"
+            "QLabel { background: transparent; }"
+        )
         layout = QVBoxLayout(self.widget)
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setContentsMargins(6, 4, 6, 4)
         layout.setSpacing(2)
 
         # 滑杆范围对齐到 factor 网格：最小值向上取整、最大值向下取整，
@@ -119,12 +126,12 @@ class _Column:
             lo = (lo // self.step) * self.step
         hi = (hi // self.step) * self.step
 
-        self.slider = NoWheelSlider(Qt.Vertical)
+        self.slider = NoWheelSlider(Qt.Horizontal)
         self.slider.setRange(lo, hi)
         self.slider.setValue(max(lo, min(hi, round(sig.default * self.scale))))
         self.slider.setSingleStep(self.step)        # 单步 = 1 个分辨率
         self.slider.setPageStep(self.step * 10)     # 翻页 = 10 个分辨率
-        self.slider.setFixedHeight(SLIDER_HEIGHT)
+        self.slider.setFixedWidth(SLIDER_WIDTH)
         self.slider.setToolTip(sig.name)
         # 刻度间隔 = 分辨率的整数倍，使刻度精确对应采样点
         tick_interval = _nice_tick_interval(hi - lo, self.step)
@@ -239,12 +246,6 @@ class SignalPanel(QWidget):
         self._emit_timer = QTimer(self)
         self._emit_timer.setSingleShot(True)
         self._emit_timer.timeout.connect(self._emit_values)
-        self._csv_rows: list[dict[str, float]] = []
-        self._csv_signal_names: list[str] = []
-        # 每个 CAN ID 独立跟踪播放进度：周期、当前行、累计时间、循环次数
-        self._playback_states: dict[int, dict] = {}
-        self._playback_timer = QTimer(self)
-        self._playback_timer.timeout.connect(self._on_playback_tick)
         self._build()
         self._rebuild_columns()
 
@@ -252,17 +253,10 @@ class SignalPanel(QWidget):
 
     def _build(self) -> None:
         top = QHBoxLayout()
+        top.addStretch(1)
 
-        self.csv_label = QLabel("未导入CSV")
-        top.addWidget(self.csv_label, 1)
-        self.import_csv_button = QPushButton("导入CSV")
-        top.addWidget(self.import_csv_button)
-        self.send_mode = QComboBox()
-        self.send_mode.addItem("循环发送")
-        self.send_mode.addItem("单次发送")
-        self.send_mode.setMinimumWidth(100)
-        top.addWidget(self.send_mode)
         self.mapping_button = QPushButton("映射配置")
+        self.mapping_button.setFixedWidth(90)
         top.addWidget(self.mapping_button)
         self.start_button = QPushButton("开始")
         self.start_button.setFixedWidth(90)
@@ -272,15 +266,11 @@ class SignalPanel(QWidget):
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
-        self.progress_label = QLabel("")
-
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top)
         layout.addWidget(self.scroll, 1)
-        layout.addWidget(self.progress_label)
 
-        self.import_csv_button.clicked.connect(self._on_import_csv)
         self.mapping_button.clicked.connect(self._on_mapping)
         self.start_button.clicked.connect(self._on_start_clicked)
 
@@ -289,23 +279,27 @@ class SignalPanel(QWidget):
         if old is not None:
             old.deleteLater()
         container = QWidget()
+        container.setStyleSheet("background: #FFFFFF;")
         grid = QGridLayout(container)
-        grid.setSpacing(0)
+        grid.setContentsMargins(1, 1, 1, 1)
+        grid.setSpacing(2)
         self._columns = []
-        for col_index, sig in enumerate(self._defs):
+        for index, sig in enumerate(self._defs):
             column = _Column(sig)
             self._columns.append(column)
-            grid.addWidget(column.widget, 0, col_index)
+            row = index % 3
+            col = index // 3
+            grid.addWidget(column.widget, row, col)
             column.slider.valueChanged.connect(lambda v, c=column: self._on_slider(c, v))
             column.check.toggled.connect(
-                lambda v, idx=col_index: self._on_check_toggled(idx, v))
+                lambda v, idx=index: self._on_check_toggled(idx, v))
             if column.spin is not None:
                 column.spin.valueChanged.connect(
                     lambda v, c=column: self._on_spin(c, float(v)))
             if column.combo is not None:
                 column.combo.currentIndexChanged.connect(
                     lambda _=0, c=column: self._on_state(c))
-        grid.setColumnStretch(len(self._defs), 1)
+        grid.setColumnStretch(len(self._defs) // 3 + 1, 1)
         self.scroll.setWidget(container)
 
     # ------------------------------------------------------------------ 联动
@@ -362,7 +356,6 @@ class SignalPanel(QWidget):
 
     def _on_start_clicked(self) -> None:
         if self._running:
-            self._stop_playback()
             self.stop_requested.emit()
             self.set_running(False)
             return
@@ -371,11 +364,6 @@ class SignalPanel(QWidget):
         if not frames:
             self.message.emit("没有启用的信号，请先勾选至少一路信号")
             return
-
-        if self._csv_rows:
-            self._init_playback_states()
-            self._apply_csv_row(0)
-            self._start_playback()
 
         # 每个 CAN ID 的周期都来自映射配置；未配置的用 100ms 兜底
         cycles: dict[int, int] = {}
@@ -389,9 +377,15 @@ class SignalPanel(QWidget):
         self._running = running
         self.start_button.setText("停止" if running else "开始")
         self.mapping_button.setEnabled(not running)
-        self.import_csv_button.setEnabled(not running)
-        if not running:
-            self._stop_playback()
+
+    def set_external_lock(self, locked: bool) -> None:
+        """外部锁定/解锁：数据模拟运行时禁用信号实验的开始和映射按钮。"""
+        self.start_button.setEnabled(not locked)
+        self.mapping_button.setEnabled(not locked)
+        if locked:
+            self.start_button.setText("运行中")
+        elif not self._running:
+            self.start_button.setText("开始")
 
     # ------------------------------------------------------------------ 映射
 
@@ -409,124 +403,14 @@ class SignalPanel(QWidget):
         self._schedule_emit()
         self.message.emit("信号映射已保存到 signals.json")
 
-    # ------------------------------------------------------------------ CSV
+    # ------------------------------------------------------------------ CSV 数据驱动
 
-    def _on_import_csv(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "导入数据", "", "数据文件 (*.csv *.xlsx *.xls)")
-        if not path:
-            return
-        sig_names = {sig.name for sig in self._defs}
-        headers: list[str] = []
-        rows: list[dict[str, float]] = []
-        parse_error: str | None = None
-
-        if path.lower().endswith((".xlsx", ".xls")):
-            try:
-                from openpyxl import load_workbook
-                wb = load_workbook(path, read_only=True, data_only=True)
-                ws = wb.active
-                row_iter = ws.iter_rows(values_only=True)
-                raw_headers = next(row_iter, None)
-                if not raw_headers:
-                    parse_error = "空文件"
-                else:
-                    headers = [str(h).strip() if h else "" for h in raw_headers]
-                    for h in headers:
-                        if h and h not in sig_names:
-                            parse_error = f"信号\u201c{h}\u201d在映射配置中不存在"
-                            break
-                    if parse_error is None:
-                        for line_no, row in enumerate(row_iter, start=2):
-                            if not any(cell is not None and str(cell).strip() for cell in row):
-                                continue
-                            values: dict[str, float] = {}
-                            for i, cell in enumerate(row):
-                                if i >= len(headers):
-                                    break
-                                if cell is None or str(cell).strip() == "":
-                                    continue
-                                try:
-                                    values[headers[i]] = float(str(cell).strip())
-                                except ValueError:
-                                    parse_error = f"第{line_no}行数据格式错误：\u201c{cell}\u201d"
-                                    break
-                            if parse_error is not None:
-                                break
-                            rows.append(values)
-                wb.close()
-            except Exception as exc:
-                QMessageBox.critical(self, "导入错误", f"读取Excel文件失败：{exc}")
-                return
-        else:
-            for enc in ("utf-8-sig", "gbk", "latin-1"):
-                headers = []
-                rows = []
-                parse_error = None
-                try:
-                    with open(path, encoding=enc) as f:
-                        reader = csv.reader(f)
-                        raw_headers = next(reader, None)
-                        if not raw_headers:
-                            parse_error = "空文件"
-                            break
-                        headers = [h.strip() for h in raw_headers]
-                        for h in headers:
-                            if h not in sig_names:
-                                parse_error = (
-                                    f"信号\u201c{h}\u201d在映射配置中不存在")
-                                break
-                        if parse_error is not None:
-                            break
-                        for line_no, row in enumerate(reader, start=2):
-                            if not any(cell.strip() for cell in row):
-                                continue
-                            values: dict[str, float] = {}
-                            for i, cell in enumerate(row):
-                                if i >= len(headers):
-                                    break
-                                try:
-                                    values[headers[i]] = float(cell.strip())
-                                except ValueError:
-                                    parse_error = (
-                                        f"第{line_no}行数据格式错误："
-                                        f"\u201c{cell.strip()}\u201d")
-                                    break
-                            if parse_error is not None:
-                                break
-                            rows.append(values)
-                    break
-                except UnicodeDecodeError:
-                    continue
-                except OSError as exc:
-                    QMessageBox.critical(self, "导入错误", str(exc))
-                    return
-            else:
-                QMessageBox.critical(
-                    self, "导入错误", "无法识别文件编码，请使用 UTF-8 或 GBK")
-                return
-
-        if parse_error is not None:
-            QMessageBox.warning(self, "导入错误", parse_error)
-            return
-        if not rows:
-            QMessageBox.warning(self, "导入错误", "文件中没有数据行")
-            return
-        self._csv_signal_names = headers
-        self._csv_rows = rows
-        self._playback_states = {}
-        self._update_progress_label()
-        self.csv_label.setText(os.path.basename(path))
-        self.message.emit(
-            f"已导入：{len(rows)} 行数据，{len(headers)} 路信号")
-
-    def _apply_csv_row(self, index: int) -> None:
-        """将 CSV 某一行的物理值写入对应信号的滑杆/数值框，阻塞信号避免递归。"""
-        row = self._csv_rows[index]
+    def apply_csv_values(self, values: dict[str, float]) -> None:
+        """将 CSV 数据行的物理值写入对应信号的滑杆/数值框，阻塞信号避免递归。"""
         for col in self._columns:
-            if col.sig.name not in row:
+            if col.sig.name not in values:
                 continue
-            val = row[col.sig.name]
+            val = values[col.sig.name]
             clamped = max(col.sig.minimum, min(col.sig.maximum, float(val)))
             col.slider.blockSignals(True)
             col.slider.setValue(round(clamped * col.scale))
@@ -536,95 +420,5 @@ class SignalPanel(QWidget):
                 col.spin.setValue(clamped)
                 col.spin.blockSignals(False)
             col._refresh_combo_display()
-
-    def _init_playback_states(self) -> None:
-        """为每个启用的 CAN ID 初始化独立的播放进度。"""
-        csv_names = set(self._csv_signal_names)
-        self._playback_states = {}
-        for col in self._columns:
-            if col.sig.name in csv_names and col.check.isChecked():
-                cid = col.sig.can_id
-                if cid in self._playback_states:
-                    continue
-                self._playback_states[cid] = {
-                    "period": self._cycles.get(cid, PERIOD_DEFAULT_MS),
-                    "row_index": 0,
-                    "accum": 0,
-                    "total_rows": len(self._csv_rows),
-                    "cycle_count": 0,
-                    "done": False,
-                }
-
-    def _start_playback(self) -> None:
-        if not self._playback_states:
-            return
-        min_period = min(s["period"] for s in self._playback_states.values())
-        self._playback_timer.setInterval(max(min_period, 10))
-        self._playback_timer.start()
-
-    def _stop_playback(self) -> None:
-        self._playback_timer.stop()
-
-    def _on_playback_tick(self) -> None:
-        if not self._playback_states:
-            self._stop_playback()
-            return
-        tick = self._playback_timer.interval()
-        dirty_cids: list[int] = []
-
-        for cid, state in self._playback_states.items():
-            state["accum"] += tick
-            if state["accum"] >= state["period"]:
-                state["accum"] -= state["period"]
-                if state["done"]:
-                    dirty_cids.append(cid)
-                    continue
-                idx = state["row_index"]
-                if idx < state["total_rows"]:
-                    self._apply_csv_row(idx)
-                    dirty_cids.append(cid)
-                    state["row_index"] = idx + 1
-                    self._update_progress_label()
-
-        if dirty_cids:
-            frames = self.current_frames()
-            wanted = {f.frame_id for f in frames if f.frame_id in dirty_cids}
-            to_emit = [f for f in frames if f.frame_id in wanted]
-            if to_emit:
-                self.values_changed.emit(to_emit)
-
-        for state in self._playback_states.values():
-            if not state["done"] and state["row_index"] >= state["total_rows"]:
-                state["done"] = True
-
-        if all(s["done"] for s in self._playback_states.values()):
-            if self.send_mode.currentIndex() == 0:
-                for state in self._playback_states.values():
-                    state["row_index"] = 0
-                    state["accum"] = 0
-                    state["cycle_count"] += 1
-                    state["done"] = False
-                self._update_progress_label()
-            else:
-                self._stop_playback()
-                self.stop_requested.emit()
-                self.set_running(False)
-                self.message.emit("CSV发送完成")
-
-    def _update_progress_label(self) -> None:
-        if not self._playback_states:
-            total = len(self._csv_rows)
-            if total == 0:
-                self.progress_label.setText("")
-            else:
-                self.progress_label.setText(f"共 {total} 行，未开始")
-            return
-        # 以"完成时间最晚"的 CAN ID 为整体进度基准（period × total_rows 最大）
-        leader = max(self._playback_states.values(),
-                     key=lambda s: s["period"] * s["total_rows"])
-        total = leader["total_rows"]
-        current = min(leader["row_index"], total)
-        pct = current / total * 100 if total else 0
-        cycle = leader["cycle_count"] + 1
-        self.progress_label.setText(
-            f"进度: {current}/{total} ({pct:.1f}%)  循环: 第{cycle}次")
+        # 触发信号值更新发送
+        self._schedule_emit()

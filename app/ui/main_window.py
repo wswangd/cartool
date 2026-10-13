@@ -5,7 +5,7 @@ from __future__ import annotations
 from PySide6.QtCore import QByteArray, Qt
 from PySide6.QtGui import QAction, QCloseEvent, QGuiApplication
 from PySide6.QtWidgets import (QGroupBox, QLabel, QMainWindow, QMessageBox,
-                               QTabWidget, QVBoxLayout, QWidget)
+                               QSplitter, QTabWidget, QVBoxLayout, QWidget)
 
 from .. import signals, storage
 from ..bus import BACKEND_SIM, BusBackend, BusConfig, create_bus
@@ -17,6 +17,7 @@ from .device_panel import DevicePanel
 from .list_panel import ListPanel
 from .send_panel import SendPanel
 from .signal_panel import SignalPanel
+from .simulate_panel import SimulatePanel
 from .trace_panel import TracePanel
 
 APP_TITLE = "CANTool — 自定义报文发送工具"
@@ -58,6 +59,7 @@ class MainWindow(QMainWindow):
 
         self.list_panel = ListPanel()
         list_group = QGroupBox("列表发送")
+        list_group.setMinimumHeight(32)
         list_layout = QVBoxLayout(list_group)
         list_layout.addWidget(self.list_panel)
 
@@ -67,28 +69,45 @@ class MainWindow(QMainWindow):
             signal_defs = signals.default_signals()
             self._signal_warning = f"signals.json 读取失败，已使用内置默认映射：{exc}"
         self.signal_panel = SignalPanel(signal_defs)
+        self.simulate_panel = SimulatePanel()
 
-        send_tab = QWidget()
-        send_layout = QVBoxLayout(send_tab)
-        send_layout.setContentsMargins(0, 0, 0, 0)
-        send_layout.addWidget(self.send_panel)
-        send_layout.addWidget(list_group, 1)
+        self._send_splitter = QSplitter(Qt.Vertical)
+        self._send_splitter.addWidget(self.send_panel)
+        self._send_splitter.addWidget(list_group)
+        self.send_panel.setMinimumHeight(32)
+        list_group.setMinimumHeight(32)
+        self._send_splitter.setStretchFactor(0, 0)
+        self._send_splitter.setStretchFactor(1, 1)
+        self._send_splitter.setCollapsible(0, False)
+        self._send_splitter.setCollapsible(1, False)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(send_tab, "报文发送")
+        self.tabs.addTab(self._send_splitter, "报文发送")
         self.tabs.addTab(self.signal_panel, "信号实验")
+        self.tabs.addTab(self.simulate_panel, "数据模拟")
 
         self.trace_panel = TracePanel()
         trace_group = QGroupBox("报文显示")
+        trace_group.setMinimumHeight(32)
         trace_layout = QVBoxLayout(trace_group)
         trace_layout.addWidget(self.trace_panel)
+
+        self._main_splitter = QSplitter(Qt.Vertical)
+        self._main_splitter.addWidget(self.device_panel)
+        self._main_splitter.addWidget(self.tabs)
+        self._main_splitter.addWidget(trace_group)
+        self._main_splitter.setStretchFactor(0, 0)
+        self._main_splitter.setStretchFactor(1, 3)
+        self._main_splitter.setStretchFactor(2, 2)
+        self.tabs.setMinimumHeight(120)
+        self._main_splitter.setCollapsible(0, False)
+        self._main_splitter.setCollapsible(1, False)
+        self._main_splitter.setCollapsible(2, False)
 
         central = QWidget()
         layout = QVBoxLayout(central)
         layout.setSpacing(6)
-        layout.addWidget(self.device_panel)
-        layout.addWidget(self.tabs, 3)
-        layout.addWidget(trace_group, 2)
+        layout.addWidget(self._main_splitter, 1)
         self.setCentralWidget(central)
 
         self.tx_label = self._status_label("发送: 0")
@@ -129,6 +148,12 @@ class MainWindow(QMainWindow):
         self.signal_panel.stop_requested.connect(self._on_signal_stop)
         self.signal_panel.values_changed.connect(self._on_signal_values)
         self.signal_panel.message.connect(self._show_message)
+
+        self.simulate_panel.playback_row.connect(self._on_simulate_row)
+        self.simulate_panel.playback_started.connect(self._on_simulate_started)
+        self.simulate_panel.playback_stopped.connect(self._on_simulate_stopped)
+        self.simulate_panel.playback_finished.connect(self._on_simulate_finished)
+        self.simulate_panel.message.connect(self._show_message)
 
         clear_action = QAction("清空报文显示", self)
         clear_action.setShortcut("Ctrl+L")
@@ -280,6 +305,8 @@ class MainWindow(QMainWindow):
         id_summary = ", ".join(f"{fid:X}={cycles.get(fid, 100)}ms"
                                for fid in sorted(cycles))
         self._show_message(f"信号实验已开始：{len(frames)} 路报文（{id_summary}）")
+        # 禁用数据模拟面板
+        self.simulate_panel.set_enabled(False)
 
     def _on_signal_stop(self) -> None:
         if self._worker is not None:
@@ -288,6 +315,8 @@ class MainWindow(QMainWindow):
         self._signal_uids = []
         self._signal_cycles = {}
         self._show_message("信号实验已停止")
+        # 启用数据模拟面板
+        self.simulate_panel.set_enabled(True)
 
     def _on_signal_values(self, frames: list[CanFrame]) -> None:
         if not self._signal_uids or self._worker is None:
@@ -305,6 +334,60 @@ class MainWindow(QMainWindow):
                 self._worker.start_periodic(uid, frame, period, 0)
                 self._signal_cycles.setdefault(can_id, period)
         self._signal_uids = list(wanted)
+
+    # -------------------------------------------------------------- 数据模拟
+
+    def _on_simulate_row(self, values: dict) -> None:
+        """数据模拟播放一行数据时，将值写入信号实验面板的滑杆。"""
+        self.signal_panel.apply_csv_values(values)
+
+    def _on_simulate_started(self) -> None:
+        """数据模拟开始播放时，自动启动信号实验发送。"""
+        if self._worker is None:
+            self.simulate_panel.stop()
+            QMessageBox.warning(self, "提示", "请先打开设备")
+            return
+        # 获取当前信号面板的报文并启动周期发送
+        frames = self.signal_panel.current_frames()
+        if not frames:
+            self.simulate_panel.stop()
+            self._show_message("没有启用的信号，请先在信号实验中勾选至少一路信号")
+            return
+        # 停止之前的信号实验发送
+        if self._signal_uids:
+            for uid in self._signal_uids:
+                self._worker.stop_periodic(uid)
+        self._signal_uids = [SIGNAL_UID_BASE + frame.frame_id for frame in frames]
+        cycles: dict[int, int] = {}
+        for frame in frames:
+            cycles[frame.frame_id] = self.simulate_panel.row_period.value()
+        self._signal_cycles = cycles
+        for uid, frame in zip(self._signal_uids, frames):
+            period = cycles.get(frame.frame_id, 100)
+            self._worker.start_periodic(uid, frame, period, 0)
+        self._show_message(f"数据模拟已开始：{len(frames)} 路报文")
+        # 锁定信号实验面板
+        self.signal_panel.set_external_lock(True)
+
+    def _on_simulate_stopped(self) -> None:
+        """用户手动停止数据模拟时，停止信号实验发送并解锁面板。"""
+        if self._worker is not None:
+            for uid in self._signal_uids:
+                self._worker.stop_periodic(uid)
+        self._signal_uids = []
+        self._show_message("数据模拟已停止")
+        # 解锁信号实验面板
+        self.signal_panel.set_external_lock(False)
+
+    def _on_simulate_finished(self) -> None:
+        """数据模拟播放完成时，停止信号实验发送。"""
+        if self._worker is not None:
+            for uid in self._signal_uids:
+                self._worker.stop_periodic(uid)
+        self._signal_uids = []
+        self._show_message("数据模拟已完成")
+        # 解锁信号实验面板
+        self.signal_panel.set_external_lock(False)
 
     # -------------------------------------------------------------- 工作线程
 
@@ -372,6 +455,12 @@ class MainWindow(QMainWindow):
                 self.trace_panel.set_direction_filter(str(trace.get("direction", "全部")))
             except (TypeError, ValueError):
                 pass
+        send_splitter_state = settings.get("send_splitter")
+        if isinstance(send_splitter_state, str):
+            self._send_splitter.restoreState(QByteArray.fromBase64(send_splitter_state.encode("ascii")))
+        main_splitter_state = settings.get("main_splitter")
+        if isinstance(main_splitter_state, str):
+            self._main_splitter.restoreState(QByteArray.fromBase64(main_splitter_state.encode("ascii")))
         geometry = settings.get("geometry")
         if isinstance(geometry, str):
             self.restoreGeometry(QByteArray.fromBase64(geometry.encode("ascii")))
@@ -391,6 +480,8 @@ class MainWindow(QMainWindow):
                 "direction": self.trace_panel.direction.currentText(),
             },
             "send": {"period_ms": self.send_panel.period_ms.value()},
+            "send_splitter": bytes(self._send_splitter.saveState().toBase64()).decode("ascii"),
+            "main_splitter": bytes(self._main_splitter.saveState().toBase64()).decode("ascii"),
             "geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
         })
 

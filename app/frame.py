@@ -22,8 +22,8 @@ FORMAT_OPTIONS = ("标准帧", "扩展帧")
 TYPE_OPTIONS = ("数据帧", "远程帧")
 DLC_OPTIONS = tuple(str(i) for i in range(DLC_MAX + 1))
 
-TRACE_HEADERS = ("序号", "时间", "方向", "帧格式", "帧类型", "ID(hex)", "长度",
-                 "数据(hex)", "设备时间戳(us)")
+TRACE_HEADERS = ("序号", "时间", "设备时间戳(us)", "方向", "帧格式", "帧类型", "ID(hex)", "长度",
+                 "数据(hex)")
 
 RX = "RX"
 TX = "TX"
