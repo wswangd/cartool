@@ -106,8 +106,8 @@ class _Column:
                             _decimal_places(sig.default), 4)
 
         self.widget = QWidget()
+        # 不设置 QWidget 背景色，避免影响子控件（如 QCheckBox）的系统默认样式
         self.widget.setStyleSheet(
-            "QWidget { background: #F0F0F0; }"
             "QDoubleSpinBox { background: white; }"
             "QComboBox { background: white; }"
             "QLabel { background: transparent; }"
@@ -209,7 +209,7 @@ class _Column:
             self.combo.blockSignals(True)
             self.combo.setEditText(f"{val:.{self.decimals}f}")
             self.combo.blockSignals(False)
-        else:
+        elif 0 < self._state_idx < len(self.sig.states):
             name = self.sig.states[self._state_idx].name
             self.combo.blockSignals(True)
             self.combo.setEditText(name)
@@ -278,18 +278,25 @@ class SignalPanel(QWidget):
         old = self.scroll.takeWidget()
         if old is not None:
             old.deleteLater()
+        from PySide6.QtWidgets import QFrame
         container = QWidget()
-        container.setStyleSheet("background: #FFFFFF;")
         grid = QGridLayout(container)
-        grid.setContentsMargins(1, 1, 1, 1)
-        grid.setSpacing(2)
+        grid.setContentsMargins(2, 2, 2, 2)
+        grid.setHorizontalSpacing(6)  # 列之间的间距
+        grid.setVerticalSpacing(6)    # 行之间的间距
+        
+        # 计算网格布局
+        rows = 3
+        cols = (len(self._defs) + 2) // 3  # 向上取整
+        
         self._columns = []
         for index, sig in enumerate(self._defs):
             column = _Column(sig)
             self._columns.append(column)
-            row = index % 3
-            col = index // 3
-            grid.addWidget(column.widget, row, col)
+            row = index % rows
+            col = index // rows
+            # 信号放在偶数行和偶数列，为分隔线留出空间
+            grid.addWidget(column.widget, row * 2, col * 2)
             column.slider.valueChanged.connect(lambda v, c=column: self._on_slider(c, v))
             column.check.toggled.connect(
                 lambda v, idx=index: self._on_check_toggled(idx, v))
@@ -299,7 +306,24 @@ class SignalPanel(QWidget):
             if column.combo is not None:
                 column.combo.currentIndexChanged.connect(
                     lambda _=0, c=column: self._on_state(c))
-        grid.setColumnStretch(len(self._defs) // 3 + 1, 1)
+        
+        # 在列之间添加垂直分隔线（奇数列）
+        for col in range(cols - 1):
+            line = QFrame()
+            line.setFrameShape(QFrame.VLine)
+            line.setFrameShadow(QFrame.Plain)
+            line.setStyleSheet("color: #BDBDBD; border: 2px solid #BDBDBD;")  # 灰色加粗
+            grid.addWidget(line, 0, col * 2 + 1, rows * 2 - 1, 1)
+        
+        # 在行之间添加水平分隔线（奇数行）
+        for row in range(rows - 1):
+            line = QFrame()
+            line.setFrameShape(QFrame.HLine)
+            line.setFrameShadow(QFrame.Plain)
+            line.setStyleSheet("color: #BDBDBD; border: 2px solid #BDBDBD;")  # 灰色加粗
+            grid.addWidget(line, row * 2 + 1, 0, 1, cols * 2 - 1)
+        
+        grid.setColumnStretch(cols * 2 - 1, 1)
         self.scroll.setWidget(container)
 
     # ------------------------------------------------------------------ 联动
@@ -311,6 +335,13 @@ class SignalPanel(QWidget):
         self._schedule_emit()
 
     def _on_slider(self, column: _Column, scaled: int) -> None:
+        # 将滑杆值对齐到分辨率网格
+        aligned = round(scaled / column.step) * column.step
+        if aligned != scaled:
+            column.slider.blockSignals(True)
+            column.slider.setValue(aligned)
+            column.slider.blockSignals(False)
+            scaled = aligned
         if column.spin is not None:
             column.spin.blockSignals(True)
             column.spin.setValue(scaled / column.scale)
@@ -326,11 +357,14 @@ class SignalPanel(QWidget):
         self._schedule_emit()
 
     def _on_state(self, column: _Column) -> None:
-        column._state_idx = column.combo.currentIndex()
-        raw = column.sig.states[column._state_idx].raw
-        column.slider.setEnabled(raw is None)
-        if column._state_idx == 0 and raw is None:
-            column.slider.setValue(round(column.sig.default * column.scale))
+        new_idx = column.combo.currentIndex()
+        # 如果 currentIndex 无效（用户输入自定义文本），保持之前的状态
+        if 0 <= new_idx < len(column.sig.states):
+            column._state_idx = new_idx
+            raw = column.sig.states[column._state_idx].raw
+            column.slider.setEnabled(raw is None)
+            if column._state_idx == 0 and raw is None:
+                column.slider.setValue(round(column.sig.default * column.scale))
         column._refresh_combo_display()
         self._schedule_emit()
 
