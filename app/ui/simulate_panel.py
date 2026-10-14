@@ -5,11 +5,69 @@ from __future__ import annotations
 import csv
 import os
 
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout, QLabel,
-                               QLineEdit, QMessageBox, QPushButton, QSpinBox,
-                               QTableWidget, QTableWidgetItem, QVBoxLayout,
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, QTimer, Signal
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog,
+                               QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+                               QPushButton, QSpinBox, QTableView, QVBoxLayout,
                                QWidget)
+
+PREVIEW_MAX = 10_000  # 预览表格最大显示行数
+
+
+class CsvTableModel(QAbstractTableModel):
+    """CSV 数据的只读 Model，供 QTableView 虚拟滚动显示。"""
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._names: list[str] = []
+        self._rows: list[dict[str, float]] = []
+        self._highlight_row: int = -1
+
+    def set_data(self, names: list[str],
+                 rows: list[dict[str, float]]) -> None:
+        self.beginResetModel()
+        self._names = names
+        self._rows = rows
+        self._highlight_row = -1
+        self.endResetModel()
+
+    def set_highlight(self, row: int) -> None:
+        """高亮指定行（播放时跟随当前行）。"""
+        old = self._highlight_row
+        self._highlight_row = row
+        if 0 <= old < len(self._rows):
+            self.dataChanged.emit(
+                self.index(old, 0),
+                self.index(old, max(len(self._names) - 1, 0)))
+        if 0 <= row < len(self._rows) and row != old:
+            self.dataChanged.emit(
+                self.index(row, 0),
+                self.index(row, max(len(self._names) - 1, 0)))
+
+    # ---- QAbstractTableModel 接口 ----
+
+    def rowCount(self, parent=QModelIndex()) -> int:
+        return min(len(self._rows), PREVIEW_MAX)
+
+    def columnCount(self, parent=QModelIndex()) -> int:
+        return len(self._names)
+
+    def data(self, index: QModelIndex, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        if role == Qt.DisplayRole:
+            name = self._names[index.column()]
+            val = self._rows[index.row()].get(name, "")
+            return f"{val:g}" if isinstance(val, float) else str(val)
+        if role == Qt.BackgroundRole and index.row() == self._highlight_row:
+            from PySide6.QtGui import QBrush
+            return QBrush(Qt.RGB(200, 220, 255))
+        return None
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self._names[section]
+        return None
 
 
 class SimulatePanel(QWidget):
@@ -26,6 +84,7 @@ class SimulatePanel(QWidget):
         super().__init__(parent)
         self._csv_rows: list[dict[str, float]] = []
         self._csv_signal_names: list[str] = []
+        self._expected_names: list[str] = []  # 映射配置的信号名
         self._last_dir = str(os.path.expanduser("~"))
         self._playing = False
         self._row_index = 0
@@ -64,11 +123,13 @@ class SimulatePanel(QWidget):
         self.start_button.setFixedWidth(90)
         toolbar.addWidget(self.start_button)
 
-        # 数据预览表格
-        self.preview = QTableWidget()
+        # 数据预览表格（使用 Model/View 支持大数据量）
+        self._model = CsvTableModel(self)
+        self.preview = QTableView()
+        self.preview.setModel(self._model)
         self.preview.setAlternatingRowColors(True)
-        self.preview.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.preview.setSelectionBehavior(QTableWidget.SelectRows)
+        self.preview.setEditTriggers(QTableView.NoEditTriggers)
+        self.preview.setSelectionBehavior(QTableView.SelectRows)
         self.preview.verticalHeader().setVisible(False)
         self.preview.verticalHeader().setDefaultSectionSize(22)
         header = self.preview.horizontalHeader()
@@ -182,6 +243,25 @@ class SimulatePanel(QWidget):
             QMessageBox.warning(self, "导入错误", "文件中没有数据行")
             return
 
+        # ── 信号名校验：与映射配置比对，不符则拒绝导入 ──
+        if self._expected_names:
+            csv_set = set(headers)
+            expected_set = set(self._expected_names)
+            extra = csv_set - expected_set      # CSV 中多出的
+            missing = expected_set - csv_set     # 映射配置中有但 CSV 缺的
+            if extra or missing:
+                parts: list[str] = []
+                if extra:
+                    parts.append(f"CSV 中多余的信号（{len(extra)} 路）：\n  "
+                                 + "、".join(sorted(extra)))
+                if missing:
+                    parts.append(f"映射配置缺失的信号（{len(missing)} 路）：\n  "
+                                 + "、".join(sorted(missing)))
+                msg = ("CSV 信号与映射配置不一致，已取消导入。\n\n"
+                       + "\n\n".join(parts))
+                QMessageBox.critical(self, "信号校验失败", msg)
+                return
+
         self._csv_signal_names = headers
         self._csv_rows = rows
         self._row_index = 0
@@ -193,22 +273,8 @@ class SimulatePanel(QWidget):
         self.message.emit(f"已导入：{len(rows)} 行数据，{len(headers)} 路信号")
 
     def _fill_preview(self) -> None:
-        """将导入的数据填充到预览表格（最多显示前 200 行）。"""
-        self.preview.clear()
-        if not self._csv_rows:
-            self.preview.setRowCount(0)
-            self.preview.setColumnCount(0)
-            return
-        cols = self._csv_signal_names
-        max_rows = min(len(self._csv_rows), 200)
-        self.preview.setColumnCount(len(cols))
-        self.preview.setHorizontalHeaderLabels(cols)
-        self.preview.setRowCount(max_rows)
-        for r in range(max_rows):
-            for c, name in enumerate(cols):
-                val = self._csv_rows[r].get(name, "")
-                text = f"{val:g}" if isinstance(val, float) else str(val)
-                self.preview.setItem(r, c, QTableWidgetItem(text))
+        """将导入的数据填充到预览表格（最多显示 PREVIEW_MAX 行）。"""
+        self._model.set_data(self._csv_signal_names, self._csv_rows)
 
     # ------------------------------------------------------------------ 播放
 
@@ -256,8 +322,12 @@ class SimulatePanel(QWidget):
         self._row_index += 1
         self._update_progress()
         # 高亮当前行
-        display_row = (self._row_index - 1) % min(len(self._csv_rows), 200)
-        self.preview.selectRow(display_row)
+        display_row = min(self._row_index - 1, PREVIEW_MAX - 1)
+        self._model.set_highlight(display_row)
+        # 自动滚动到可见区域
+        idx = self._model.index(display_row, 0)
+        if idx.isValid():
+            self.preview.scrollTo(idx, QAbstractItemView.PositionToCenter)
 
     def _update_progress(self) -> None:
         total = len(self._csv_rows)
@@ -291,3 +361,7 @@ class SimulatePanel(QWidget):
         """启用/禁用开始按钮和导入按钮，用于与信号实验互斥。"""
         self.start_button.setEnabled(enabled)
         self.import_button.setEnabled(enabled)
+
+    def set_signal_names(self, names: list[str]) -> None:
+        """设置映射配置的信号名列表，用于导入 CSV 时校验。"""
+        self._expected_names = list(names)

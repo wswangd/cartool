@@ -155,6 +155,12 @@ class MainWindow(QMainWindow):
         self.simulate_panel.playback_finished.connect(self._on_simulate_finished)
         self.simulate_panel.message.connect(self._show_message)
 
+        # 将映射配置的信号名同步给数据模拟面板，用于 CSV 导入校验
+        self.signal_panel.mapping_changed.connect(
+            self.simulate_panel.set_signal_names)
+        self.simulate_panel.set_signal_names(
+            [d.name for d in self.signal_panel._defs])
+
         clear_action = QAction("清空报文显示", self)
         clear_action.setShortcut("Ctrl+L")
         clear_action.triggered.connect(self.trace_panel.clear)
@@ -358,14 +364,19 @@ class MainWindow(QMainWindow):
             for uid in self._signal_uids:
                 self._worker.stop_periodic(uid)
         self._signal_uids = [SIGNAL_UID_BASE + frame.frame_id for frame in frames]
+        # 优先使用映射配置中每个 CAN ID 的周期，未配置的用行周期兜底
+        row_period = self.simulate_panel.row_period.value()
         cycles: dict[int, int] = {}
         for frame in frames:
-            cycles[frame.frame_id] = self.simulate_panel.row_period.value()
+            cycles[frame.frame_id] = self.signal_panel._cycles.get(
+                frame.frame_id, row_period)
         self._signal_cycles = cycles
         for uid, frame in zip(self._signal_uids, frames):
             period = cycles.get(frame.frame_id, 100)
             self._worker.start_periodic(uid, frame, period, 0)
-        self._show_message(f"数据模拟已开始：{len(frames)} 路报文")
+        id_summary = ", ".join(f"{fid:X}={cycles.get(fid, 100)}ms"
+                               for fid in sorted(cycles))
+        self._show_message(f"数据模拟已开始：{len(frames)} 路报文（{id_summary}）")
         # 锁定信号实验面板
         self.signal_panel.set_external_lock(True)
 
@@ -376,8 +387,9 @@ class MainWindow(QMainWindow):
                 self._worker.stop_periodic(uid)
         self._signal_uids = []
         self._show_message("数据模拟已停止")
-        # 解锁信号实验面板
+        # 解锁信号实验面板，清除 CSV 高亮
         self.signal_panel.set_external_lock(False)
+        self.signal_panel.clear_csv_highlight()
 
     def _on_simulate_finished(self) -> None:
         """数据模拟播放完成时，停止信号实验发送。"""
@@ -386,8 +398,9 @@ class MainWindow(QMainWindow):
                 self._worker.stop_periodic(uid)
         self._signal_uids = []
         self._show_message("数据模拟已完成")
-        # 解锁信号实验面板
+        # 解锁信号实验面板，清除 CSV 高亮
         self.signal_panel.set_external_lock(False)
+        self.signal_panel.clear_csv_highlight()
 
     # -------------------------------------------------------------- 工作线程
 

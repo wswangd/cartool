@@ -107,11 +107,21 @@ class _Column:
 
         self.widget = QWidget()
         # 不设置 QWidget 背景色，避免影响子控件（如 QCheckBox）的系统默认样式
-        self.widget.setStyleSheet(
+        self._normal_style = (
             "QDoubleSpinBox { background: white; }"
             "QComboBox { background: white; }"
             "QLabel { background: transparent; }"
         )
+        # 高亮样式：类似选中状态的蓝色背景
+        self._highlight_style = (
+            "QWidget { background: #0078D7; }"
+            "QDoubleSpinBox { background: #0078D7; color: white; }"
+            "QComboBox { background: #0078D7; color: white; }"
+            "QLabel { background: transparent; color: white; }"
+            "QCheckBox { color: white; }"
+        )
+        self.widget.setStyleSheet(self._normal_style)
+        self._highlighted = False
         layout = QVBoxLayout(self.widget)
         layout.setContentsMargins(6, 4, 6, 4)
         layout.setSpacing(2)
@@ -230,11 +240,19 @@ class _Column:
             self.slider.setValue(round(self.sig.default * self.scale))
         self._refresh_combo_display()
 
+    def set_highlight(self, on: bool) -> None:
+        """高亮/取消高亮该列控件。"""
+        if on == self._highlighted:
+            return
+        self._highlighted = on
+        self.widget.setStyleSheet(self._highlight_style if on else self._normal_style)
+
 
 class SignalPanel(QWidget):
     start_requested = Signal(object, object)   # list[CanFrame], dict[int,int] cycles
     stop_requested = Signal()
     values_changed = Signal(object)            # list[CanFrame]，节流后发出
+    mapping_changed = Signal(object)           # list[str] 信号名列表，映射配置变更时发出
     message = Signal(str)
 
     def __init__(self, defs: list[SignalDef], parent=None) -> None:
@@ -436,6 +454,7 @@ class SignalPanel(QWidget):
         self._rebuild_columns()
         self._schedule_emit()
         self.message.emit("信号映射已保存到 signals.json")
+        self.mapping_changed.emit([d.name for d in self._defs])
 
     # ------------------------------------------------------------------ CSV 数据驱动
 
@@ -454,5 +473,11 @@ class SignalPanel(QWidget):
                 col.spin.setValue(clamped)
                 col.spin.blockSignals(False)
             col._refresh_combo_display()
+            col.set_highlight(True)  # 高亮当前被更新的信号列
         # 触发信号值更新发送
         self._schedule_emit()
+
+    def clear_csv_highlight(self) -> None:
+        """清除所有信号列的 CSV 高亮。"""
+        for col in self._columns:
+            col.set_highlight(False)
