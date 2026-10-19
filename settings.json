@@ -11,14 +11,14 @@
     "acc_mask": 4294967295
   },
   "trace": {
-    "capacity": 100,
+    "capacity": 5100,
     "autoscroll": true,
     "direction": "全部"
   },
   "send": {
     "period_ms": 100
   },
-  "send_splitter": "AAAA/wAAAAEAAAACAAAAfgAAAQUB/////wEAAAACAA==",
-  "main_splitter": "AAAA/wAAAAEAAAADAAAAnQAABOAAAAIKAf////8BAAAAAgA=",
-  "geometry": "AdnQywADAAAAAAGyAAAAcAAABk0AAAPBAAABsgAAAI4AAAZNAAADwQAAAAAAAAAACAAAAAGyAAAAjgAABk0AAAPB"
+  "send_splitter": "AAAA/wAAAAEAAAACAAAAZwAAAJwB/////wEAAAACAA==",
+  "main_splitter": "AAAA/wAAAAEAAAADAAAAnQAAASUAAACWAf////8BAAAAAgA=",
+  "geometry": "AdnQywADAAAAAAAA////+QAABP8AAAKfAAAAAAAAABUAAAPKAAACnQAAAAACAAAABQAAAAAAAAAAFwAABP8AAAKf"
 }

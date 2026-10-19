@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (QFileDialog, QHBoxLayout, QHeaderView, QMenu,
                                QPushButton, QTableView, QVBoxLayout, QWidget)
 
 from .. import storage
-from ..frame import (CanFrame, FORMAT_OPTIONS, SEND_TYPE_OPTIONS, SendItem,
-                      TYPE_OPTIONS)
+from ..frame import (CanFrame, DLC_OPTIONS, FORMAT_OPTIONS, SEND_TYPE_OPTIONS,
+                      SendItem, TYPE_OPTIONS)
 from ..models import (COL_DLC, COL_DATA, COL_ENABLED, COL_FORMAT, COL_ID,
                       COL_NOTE, COL_PERIOD, COL_REPEAT, COL_SEND_TYPE, COL_SENT,
                       COL_TYPE, SendListModel)
@@ -29,6 +29,8 @@ class ListPanel(QWidget):
         self.model = SendListModel(self)
         self._running: set[int] = set()
         self._last_dir = str(Path.home())
+        self._editor_columns = {COL_FORMAT, COL_TYPE, COL_SEND_TYPE, COL_DLC,
+                                COL_PERIOD, COL_REPEAT}
         self._build()
         self._wire()
 
@@ -48,7 +50,7 @@ class ListPanel(QWidget):
         self.table.setItemDelegateForColumn(COL_SEND_TYPE,
                                             ComboDelegate(SEND_TYPE_OPTIONS, self))
         self.table.setItemDelegateForColumn(COL_DLC,
-                                            SpinDelegate(0, 8, self))
+                                            ComboDelegate(DLC_OPTIONS, self))
         self.table.setItemDelegateForColumn(COL_PERIOD,
                                             SpinDelegate(0, 600000, self))
         self.table.setItemDelegateForColumn(COL_REPEAT,
@@ -57,9 +59,9 @@ class ListPanel(QWidget):
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Interactive)
         header.setSectionResizeMode(COL_DATA, QHeaderView.Stretch)
-        for column, width in ((COL_ID, 90), (COL_NOTE, 130), (COL_FORMAT, 80),
+        for column, width in ((COL_ENABLED, 44), (COL_ID, 90), (COL_FORMAT, 80),
                               (COL_TYPE, 76), (COL_SEND_TYPE, 110), (COL_DLC, 52),
-                              (COL_PERIOD, 80), (COL_REPEAT, 66), (COL_ENABLED, 44)):
+                              (COL_PERIOD, 80), (COL_REPEAT, 66), (COL_NOTE, 130)):
             header.resizeSection(column, width)
 
         buttons = (
@@ -94,12 +96,34 @@ class ListPanel(QWidget):
         layout.addWidget(self.table)
 
     def _wire(self) -> None:
-        self.model.rowsInserted.connect(lambda *_: self._refresh_count())
-        self.model.rowsRemoved.connect(lambda *_: self._refresh_count())
-        self.model.modelReset.connect(self._refresh_count)
+        self.model.rowsInserted.connect(self._on_rows_inserted)
+        self.model.rowsRemoved.connect(self._on_rows_removed)
+        self.model.modelReset.connect(self._on_model_reset)
         self.model.parse_error.connect(self.message)
         self.table.customContextMenuRequested.connect(self._on_context_menu)
         self.model.dataChanged.connect(self._on_data_changed)
+
+    def _open_editors(self, first: int, last: int) -> None:
+        for row in range(first, last + 1):
+            for col in self._editor_columns:
+                self.table.openPersistentEditor(self.model.index(row, col))
+
+    def _close_editors(self, first: int, last: int) -> None:
+        for row in range(first, last + 1):
+            for col in self._editor_columns:
+                self.table.closePersistentEditor(self.model.index(row, col))
+
+    def _on_rows_inserted(self, parent, first: int, last: int) -> None:
+        self._refresh_count()
+        self._open_editors(first, last)
+
+    def _on_rows_removed(self, parent, first: int, last: int) -> None:
+        self._refresh_count()
+        self._close_editors(first, last)
+
+    def _on_model_reset(self) -> None:
+        self._refresh_count()
+        self._open_editors(0, self.model.rowCount() - 1)
 
     def _refresh_count(self) -> None:
         self.count_label.setText(f"{self.model.rowCount()} 条")
@@ -112,9 +136,7 @@ class ListPanel(QWidget):
 
     def _on_add(self) -> None:
         self.model.append(CanFrame(frame_id=0x100, data=bytes(8), dlc=8))
-        row = self.model.rowCount() - 1
         self.table.scrollToBottom()
-        self.table.edit(self.model.index(row, COL_ID))
 
     def _selected_rows(self) -> list[int]:
         return sorted({index.row() for index in self.table.selectionModel().selectedRows()})
@@ -162,6 +184,7 @@ class ListPanel(QWidget):
         if not tasks:
             self.message.emit("没有可定时的报文：需勾选启用并把周期设为大于 0")
             return
+        self.model.set_sending(True)
         self.start_tasks.emit(tasks)
         self.message.emit(f"已启动 {len(tasks)} 条定时报文")
 
@@ -171,12 +194,15 @@ class ListPanel(QWidget):
             return
         uids = list(self._running)
         self._running.clear()
+        self.model.set_sending(False)
         self.stop_tasks.emit(uids)
         self.message.emit(f"已停止 {len(uids)} 条定时报文")
 
     def mark_task_finished(self, uid: int) -> None:
         if uid in self._running:
             self._running.discard(uid)
+            if not self._running:
+                self.model.set_sending(False)
             self.message.emit(f"第 {self.model.row_of_uid(uid) + 1} 行报文已按设定次数发送完毕")
 
     def running_uids(self) -> list[int]:
@@ -265,6 +291,8 @@ class ListPanel(QWidget):
     def _stop_one(self, uid: int) -> None:
         self._running.discard(uid)
         self.stop_tasks.emit([uid])
+        if not self._running:
+            self.model.set_sending(False)
 
     def _remove_row(self, row: int) -> None:
         self.table.selectRow(row)
@@ -283,3 +311,4 @@ class ListPanel(QWidget):
             button.setEnabled(enabled)
         if not enabled:
             self._running.clear()
+            self.model.set_sending(False)

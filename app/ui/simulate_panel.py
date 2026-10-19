@@ -60,8 +60,10 @@ class CsvTableModel(QAbstractTableModel):
             val = self._rows[index.row()].get(name, "")
             return f"{val:g}" if isinstance(val, float) else str(val)
         if role == Qt.BackgroundRole and index.row() == self._highlight_row:
-            from PySide6.QtGui import QBrush
-            return QBrush(Qt.RGB(200, 220, 255))
+            from PySide6.QtGui import QBrush, QPalette
+            from PySide6.QtWidgets import QApplication
+            palette = QApplication.palette()
+            return QBrush(palette.color(QPalette.Active, QPalette.Highlight))
         return None
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -130,6 +132,7 @@ class SimulatePanel(QWidget):
         self.preview.setAlternatingRowColors(True)
         self.preview.setEditTriggers(QTableView.NoEditTriggers)
         self.preview.setSelectionBehavior(QTableView.SelectRows)
+        self.preview.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.preview.verticalHeader().setVisible(False)
         self.preview.verticalHeader().setDefaultSectionSize(22)
         header = self.preview.horizontalHeader()
@@ -290,6 +293,8 @@ class SimulatePanel(QWidget):
         self._cycle_count = 0
         self.start_button.setText("停止")
         self.import_button.setEnabled(False)
+        self.send_mode.setEnabled(False)
+        self.row_period.setEnabled(False)
         self._playback_timer.start(max(self.row_period.value(), 10))
         self._update_progress()
         self.playback_started.emit()
@@ -299,6 +304,8 @@ class SimulatePanel(QWidget):
         self._playback_timer.stop()
         self.start_button.setText("开始")
         self.import_button.setEnabled(True)
+        self.send_mode.setEnabled(True)
+        self.row_period.setEnabled(True)
         self._update_progress()
         self.playback_stopped.emit()
 
@@ -324,10 +331,11 @@ class SimulatePanel(QWidget):
         # 高亮当前行
         display_row = min(self._row_index - 1, PREVIEW_MAX - 1)
         self._model.set_highlight(display_row)
-        # 自动滚动到可见区域
+        # 自动滚动到可见的区域，并更新滚动条
         idx = self._model.index(display_row, 0)
         if idx.isValid():
-            self.preview.scrollTo(idx, QAbstractItemView.PositionToCenter)
+            self.preview.scrollTo(idx, QAbstractItemView.ScrollHint.EnsureVisible)
+            self.preview.viewport().update()
 
     def _update_progress(self) -> None:
         total = len(self._csv_rows)

@@ -308,7 +308,7 @@ class MainWindow(QMainWindow):
         for uid, frame in zip(self._signal_uids, frames):
             period = cycles.get(frame.frame_id, 100)
             self._worker.start_periodic(uid, frame, period, 0)
-        id_summary = ", ".join(f"{fid:X}={cycles.get(fid, 100)}ms"
+        id_summary = ", ".join(f"{fid:08X}={cycles.get(fid, 100)}ms"
                                for fid in sorted(cycles))
         self._show_message(f"信号实验已开始：{len(frames)} 路报文（{id_summary}）")
         # 禁用数据模拟面板
@@ -364,19 +364,17 @@ class MainWindow(QMainWindow):
             for uid in self._signal_uids:
                 self._worker.stop_periodic(uid)
         self._signal_uids = [SIGNAL_UID_BASE + frame.frame_id for frame in frames]
-        # 优先使用映射配置中每个 CAN ID 的周期，未配置的用行周期兜底
+        # 所有报文统一使用行周期发送，不使用映射配置中的周期
         row_period = self.simulate_panel.row_period.value()
         cycles: dict[int, int] = {}
         for frame in frames:
-            cycles[frame.frame_id] = self.signal_panel._cycles.get(
-                frame.frame_id, row_period)
+            cycles[frame.frame_id] = row_period
         self._signal_cycles = cycles
-        for uid, frame in zip(self._signal_uids, frames):
-            period = cycles.get(frame.frame_id, 100)
-            self._worker.start_periodic(uid, frame, period, 0)
-        id_summary = ", ".join(f"{fid:X}={cycles.get(fid, 100)}ms"
-                               for fid in sorted(cycles))
-        self._show_message(f"数据模拟已开始：{len(frames)} 路报文（{id_summary}）")
+        for i, (uid, frame) in enumerate(zip(self._signal_uids, frames)):
+            # 每个报文错开 10ms 发送，避免瞬时负载过高
+            offset = i * 10
+            self._worker.start_periodic(uid, frame, row_period, offset)
+        self._show_message(f"数据模拟已开始：{len(frames)} 路报文，行周期={row_period}ms")
         # 锁定信号实验面板
         self.signal_panel.set_external_lock(True)
 

@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Editor-generated project metadata
+.qoder/
+
+# Local debug and comparison output
+*.log
+comparison.txt
+csv_check.txt
+csv_decoded.txt
+current_signals.txt
+debug_import.txt
+exe_signals.txt
+signal_names.txt
+signals_compare.txt
+
+# Regenerable test output
+test_large.csv
+test_csv_export.csv

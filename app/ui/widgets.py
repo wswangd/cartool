@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QComboBox, QStyledItemDelegate
 
 
@@ -16,6 +17,9 @@ class ComboDelegate(QStyledItemDelegate):
         combo.setEditable(False)
         return combo
 
+    def updateEditorGeometry(self, editor, option, index) -> None:
+        editor.setGeometry(option.rect)
+
     def setEditorData(self, editor: QComboBox, index) -> None:
         current = index.data()
         editor.setCurrentIndex(self._options.index(current) if current in self._options
@@ -23,6 +27,16 @@ class ComboDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor: QComboBox, model, index) -> None:
         model.setData(index, editor.currentText())
+
+    def paint(self, painter, option, index) -> None:
+        # 只绘制背景（选中/交替行色），不绘制文字，由持久化编辑器控件显示
+        from PySide6.QtWidgets import QStyleOptionViewItem
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        # 填充单元格背景（处理选中高亮、交替行色等）
+        opt.widget.style().drawPrimitive(
+            opt.widget.style().PE_PanelItemViewItem, opt, painter, opt.widget)
+        # 不绘制文字，由持久化编辑器控件覆盖
 
 
 class SpinDelegate(QStyledItemDelegate):
@@ -41,6 +55,9 @@ class SpinDelegate(QStyledItemDelegate):
             spin.setSpecialValueText(self._zero_text)
         return spin
 
+    def updateEditorGeometry(self, editor, option, index) -> None:
+        editor.setGeometry(option.rect)
+
     def setEditorData(self, editor, index) -> None:
         text = str(index.data() or "0").strip()
         try:
@@ -51,3 +68,10 @@ class SpinDelegate(QStyledItemDelegate):
 
     def setModelData(self, editor, model, index) -> None:
         model.setData(index, str(editor.value()))
+
+    def paint(self, painter, option, index) -> None:
+        from PySide6.QtWidgets import QStyleOptionViewItem
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        opt.widget.style().drawPrimitive(
+            opt.widget.style().PE_PanelItemViewItem, opt, painter, opt.widget)

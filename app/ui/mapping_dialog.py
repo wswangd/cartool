@@ -260,7 +260,7 @@ class MappingDialog(QDialog):
         check.setCheckState(Qt.Checked if sig.enabled else Qt.Unchecked)
         self.data_table.setItem(row, 4, check)
 
-        can_id_edit = QLineEdit(f"{sig.can_id:X}")
+        can_id_edit = QLineEdit(f"{sig.can_id:08X}")
         can_id_edit.setPlaceholderText("如 1A2")
         can_id_edit._last_can_id = sig.can_id  # 记录上次生效的 CAN ID
         can_id_edit.editingFinished.connect(
@@ -317,7 +317,7 @@ class MappingDialog(QDialog):
 
         if not text:
             if old_id is not None:
-                edit.setText(f"{old_id:X}")
+                edit.setText(f"{old_id:08X}")
             return
 
         # 小写自动转大写
@@ -333,7 +333,7 @@ class MappingDialog(QDialog):
                 self, "CAN ID 无效",
                 f"\u201c{upper}\u201d 不是有效的十六进制数")
             if old_id is not None:
-                edit.setText(f"{old_id:X}")
+                edit.setText(f"{old_id:08X}")
             return
 
         # 检查是否与其他行重复
@@ -346,8 +346,8 @@ class MappingDialog(QDialog):
                     if int(other_text, 16) == new_id:
                         QMessageBox.warning(
                             self, "CAN ID 重复",
-                            f"ID \u201c{new_id:X}\u201d 已被第 {r + 1} 行使用")
-                        edit.setText(f"{old_id:X}" if old_id is not None
+                            f"ID \u201c{new_id:08X}\u201d 已被第 {r + 1} 行使用")
+                        edit.setText(f"{old_id:08X}" if old_id is not None
                                      else "")
                         return
                 except ValueError:
@@ -374,7 +374,7 @@ class MappingDialog(QDialog):
         for can_id in sorted(can_ids):
             row = self.cycle_table.rowCount()
             self.cycle_table.insertRow(row)
-            id_edit = QLineEdit(f"{can_id:X}")
+            id_edit = QLineEdit(f"{can_id:08X}")
             id_edit.setReadOnly(True)
             self.cycle_table.setCellWidget(row, 0, id_edit)
             spin_cycle = make_int_spin(self._cycles.get(can_id, 100), 10, 10000)
@@ -503,7 +503,7 @@ class MappingDialog(QDialog):
                    "note": "信号与报文映射配置：can_id/extended/start_bit/bit_length/"
                            "byte_order/factor/offset 决定物理值如何装进报文",
                    "signals": [sig.to_dict() for sig in defs],
-                   "cycles": {f"{k:X}": v for k, v in cycles.items()}}
+                   "cycles": {f"{k:08X}": v for k, v in cycles.items()}}
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)

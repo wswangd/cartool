@@ -13,11 +13,11 @@ from .frame import (RX, TX, SEND_TYPE_OPTIONS, TRACE_HEADERS, CanFrame,
 
 # ----------------------------------------------------------------- 列表发送
 
-COL_ENABLED, COL_NOTE, COL_ID, COL_FORMAT, COL_TYPE, COL_SEND_TYPE, COL_DLC, \
-    COL_DATA, COL_PERIOD, COL_REPEAT, COL_SENT = range(11)
+COL_ENABLED, COL_ID, COL_FORMAT, COL_TYPE, COL_SEND_TYPE, COL_DLC, \
+    COL_DATA, COL_PERIOD, COL_REPEAT, COL_NOTE, COL_SENT = range(11)
 
-SEND_HEADERS = ("发送", "备注", "ID(hex)", "帧格式", "帧类型", "发送类型",
-                "长度", "数据(hex)", "周期(ms)", "次数", "已发")
+SEND_HEADERS = ("发送", "ID(hex)", "帧格式", "帧类型", "发送类型",
+                "长度", "数据(hex)", "周期(ms)", "次数", "备注", "已发")
 
 
 class SendListModel(QAbstractTableModel):
@@ -30,6 +30,7 @@ class SendListModel(QAbstractTableModel):
         self._items: list[SendItem] = []
         self._uid_rows: dict[int, int] = {}
         self._next_uid = 1
+        self._sending = False  # 定时发送中，锁定下拉框编辑
 
     # ------------------------------------------------------------- 数据访问
 
@@ -116,6 +117,10 @@ class SendListModel(QAbstractTableModel):
                                   self.index(len(self._items) - 1, COL_SENT),
                                   [Qt.DisplayRole])
 
+    def set_sending(self, sending: bool) -> None:
+        """定时发送开始/停止时调用，锁定下拉框编辑防止重叠。"""
+        self._sending = sending
+
     def item_is_periodic(self, row: int) -> bool:
         item = self.item(row)
         return bool(item and item.enabled and item.period_ms > 0)
@@ -139,9 +144,13 @@ class SendListModel(QAbstractTableModel):
         if not index.isValid():
             return Qt.NoItemFlags
         base = Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        if index.column() == COL_ENABLED:
+        col = index.column()
+        if col == COL_ENABLED:
             return base | Qt.ItemIsUserCheckable
-        if index.column() == COL_SENT:
+        if col == COL_SENT:
+            return base
+        # 定时发送中，锁定下拉框列防止编辑器重叠
+        if self._sending and col in (COL_FORMAT, COL_TYPE, COL_SEND_TYPE):
             return base
         return base | Qt.ItemIsEditable
 
@@ -161,13 +170,9 @@ class SendListModel(QAbstractTableModel):
         if role not in (Qt.DisplayRole, Qt.EditRole):
             return None
 
-        if col == COL_ENABLED:
-            return "√" if item.enabled else ""
-        if col == COL_NOTE:
-            return item.note
         if col == COL_ID:
             return format_id(frame.frame_id, frame.extended) if role == Qt.DisplayRole \
-                else f"{frame.frame_id:X}"
+                else f"{frame.frame_id:08X}"
         if col == COL_FORMAT:
             return frame.format_text
         if col == COL_TYPE:
@@ -183,6 +188,8 @@ class SendListModel(QAbstractTableModel):
             return str(item.period_ms)
         if col == COL_REPEAT:
             return item.repeat_text
+        if col == COL_NOTE:
+            return item.note
         if col == COL_SENT:
             return str(item.sent)
         return None

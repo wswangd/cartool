@@ -36,7 +36,7 @@ class TracePanel(QWidget):
         self.pause_button = QPushButton("暂停")
         self.pause_button.setCheckable(True)
         self.clear_button = QPushButton("清空")
-        self.save_button = QPushButton("保存日志…")
+        self.save_button = QPushButton("保存日志")
 
         self.autoscroll = QCheckBox("自动滚动")
         self.autoscroll.setChecked(True)

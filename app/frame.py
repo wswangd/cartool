@@ -74,7 +74,7 @@ def parse_data(text: str) -> bytes:
 
 
 def format_id(arb_id: int, extended: bool = False) -> str:
-    return f"0x{arb_id:08X}" if extended else f"0x{arb_id:03X}"
+    return f"0x{arb_id:08X}"
 
 
 def format_data(data: bytes, dlc: int | None = None) -> str:
@@ -107,7 +107,7 @@ class CanFrame:
         if not 0 <= self.frame_id <= limit:
             kind = "扩展帧" if self.extended else "标准帧"
             raise FrameFormatError(
-                f"{kind} ID 0x{self.frame_id:X} 超出范围 (最大 0x{limit:X})"
+                f"{kind} ID 0x{self.frame_id:08X} 超出范围 (最大 0x{limit:X})"
             )
         if self.send_type not in SEND_TYPE_NAMES:
             raise FrameFormatError(f"未知的发送类型 {self.send_type}")

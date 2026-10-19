@@ -106,22 +106,6 @@ class _Column:
                             _decimal_places(sig.default), 4)
 
         self.widget = QWidget()
-        # 不设置 QWidget 背景色，避免影响子控件（如 QCheckBox）的系统默认样式
-        self._normal_style = (
-            "QDoubleSpinBox { background: white; }"
-            "QComboBox { background: white; }"
-            "QLabel { background: transparent; }"
-        )
-        # 高亮样式：类似选中状态的蓝色背景
-        self._highlight_style = (
-            "QWidget { background: #0078D7; }"
-            "QDoubleSpinBox { background: #0078D7; color: white; }"
-            "QComboBox { background: #0078D7; color: white; }"
-            "QLabel { background: transparent; color: white; }"
-            "QCheckBox { color: white; }"
-        )
-        self.widget.setStyleSheet(self._normal_style)
-        self._highlighted = False
         layout = QVBoxLayout(self.widget)
         layout.setContentsMargins(6, 4, 6, 4)
         layout.setSpacing(2)
@@ -239,13 +223,6 @@ class _Column:
             # 仍在"正常"，重置到默认值
             self.slider.setValue(round(self.sig.default * self.scale))
         self._refresh_combo_display()
-
-    def set_highlight(self, on: bool) -> None:
-        """高亮/取消高亮该列控件。"""
-        if on == self._highlighted:
-            return
-        self._highlighted = on
-        self.widget.setStyleSheet(self._highlight_style if on else self._normal_style)
 
 
 class SignalPanel(QWidget):
@@ -473,11 +450,9 @@ class SignalPanel(QWidget):
                 col.spin.setValue(clamped)
                 col.spin.blockSignals(False)
             col._refresh_combo_display()
-            col.set_highlight(True)  # 高亮当前被更新的信号列
         # 触发信号值更新发送
         self._schedule_emit()
 
     def clear_csv_highlight(self) -> None:
-        """清除所有信号列的 CSV 高亮。"""
-        for col in self._columns:
-            col.set_highlight(False)
+        """清除所有信号列的 CSV 高亮（已禁用）。"""
+        pass

@@ -219,7 +219,7 @@ class SendPanel(QGroupBox):
         self.format_combo.setCurrentText(frame.format_text)
         self.type_combo.setCurrentText(frame.type_text)
         self.send_type_combo.setCurrentIndex(frame.send_type)
-        self.id_edit.setText(f"{frame.frame_id:X}")
+        self.id_edit.setText(f"{frame.frame_id:08X}")
         self.dlc_combo.setCurrentText(str(frame.dlc))
         for i, edit in enumerate(self.byte_edits):
             edit.setText(f"{frame.data[i]:02X}" if i < len(frame.data) else "00")

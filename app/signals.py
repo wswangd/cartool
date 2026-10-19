@@ -136,7 +136,7 @@ class SignalDef:
             "name": self.name, "unit": self.unit,
             "min": self._num(self.minimum), "max": self._num(self.maximum),
             "default": self._num(self.default), "enabled": self.enabled,
-            "can_id": f"{self.can_id:X}", "extended": self.extended,
+            "can_id": f"{self.can_id:08X}", "extended": self.extended,
             "start_bit": self.start_bit, "bit_length": self.bit_length,
             "byte_order": self.byte_order,
             "factor": self._num(self.factor), "offset": self._num(self.offset),

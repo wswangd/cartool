@@ -55,6 +55,7 @@ class BusWorker(QThread):
         self._last_status = 0.0
         self._last_failure = 0.0
         self._pending_progress: dict[int, int] = {}
+        self._next_immediate_due: float = 0.0  # 即时发送间隔控制
 
     # ------------------------------------------------------------ 界面侧接口
 
@@ -114,12 +115,15 @@ class BusWorker(QThread):
     def _flush_immediate(self) -> bool:
         with self._lock:
             if not self._immediate:
+                self._next_immediate_due = 0.0
                 return True
-            batch = []
-            while self._immediate and len(batch) < 200:
-                batch.append(self._immediate.popleft())
-        self._transmit(batch)
-        return False
+            now = time.perf_counter()
+            if now < self._next_immediate_due:
+                return False
+            frame = self._immediate.popleft()
+        self._transmit([frame])
+        self._next_immediate_due = time.perf_counter() + 0.010  # 10ms 间隔
+        return bool(self._immediate)
 
     def _run_periodic(self, now: float) -> bool:
         with self._lock:

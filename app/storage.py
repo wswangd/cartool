@@ -19,7 +19,7 @@ else:
 SETTINGS_PATH = APP_DIR / "settings.json"
 FILE_VERSION = 1
 
-LIST_CSV_HEADERS = ("启用", "备注", "ID(hex)", "帧格式", "帧类型", "发送类型",
+LIST_CSV_HEADERS = ("备注", "ID(hex)", "帧格式", "帧类型", "发送类型",
                     "长度", "数据(hex)", "周期(ms)", "次数")
 
 
@@ -33,7 +33,7 @@ def _item_to_dict(item: SendItem) -> dict:
     frame = item.frame
     return {
         "enabled": item.enabled, "note": item.note,
-        "id": f"{frame.frame_id:X}", "extended": frame.extended,
+        "id": f"{frame.frame_id:08X}", "extended": frame.extended,
         "remote": frame.remote, "send_type": frame.send_type,
         "dlc": frame.dlc, "data": format_data(frame.data),
         "period_ms": item.period_ms, "repeat": item.repeat,
@@ -82,7 +82,7 @@ def save_list_csv(path: Path, items: list[SendItem]) -> None:
         for item in items:
             frame = item.frame
             writer.writerow([
-                1 if item.enabled else 0, item.note, f"{frame.frame_id:X}",
+                item.note, f"{frame.frame_id:08X}",
                 frame.format_text, frame.type_text, frame.send_type_text,
                 frame.dlc, format_data(frame.data), item.period_ms,
                 item.repeat if item.repeat > 0 else "无限",
@@ -176,10 +176,10 @@ def export_trace_csv(path: Path, records: list[TraceRecord]) -> None:
         for record in records:
             frame = record.frame
             writer.writerow([
-                record.seq, record.time_text, record.direction,
-                frame.format_text, "错误帧" if record.error else frame.type_text,
-                f"{frame.frame_id:X}", frame.dlc, format_data(frame.payload),
-                record.dev_timestamp or "",
+                record.seq, f"\t{record.time_text}", record.dev_timestamp or "",
+                record.direction, frame.format_text,
+                "错误帧" if record.error else frame.type_text,
+                f"{frame.frame_id:08X}", frame.dlc, format_data(frame.payload),
             ])
 
 

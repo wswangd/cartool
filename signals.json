@@ -105,7 +105,7 @@
       "states": []
     },
     {
-      "name": "上游NOx",
+      "name": "上游 NOx",
       "unit": "ppm",
       "min": 0,
       "max": 3012,
@@ -121,7 +121,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
@@ -137,7 +137,7 @@
       ]
     },
     {
-      "name": "下游NOx",
+      "name": "下游 NOx",
       "unit": "ppm",
       "min": 0,
       "max": 3012,
@@ -153,7 +153,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
@@ -219,7 +219,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
@@ -345,7 +345,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
@@ -421,7 +421,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
@@ -521,7 +521,7 @@
       "editor": "state",
       "states": [
         {
-          "name": "正常",
+          "name": "默认",
           "raw": null
         },
         {
