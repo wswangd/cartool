@@ -101,10 +101,10 @@ class SimulatePanel(QWidget):
         # 工具栏
         toolbar = QHBoxLayout()
 
-        self.csv_label = QLabel("未导入CSV")
+        self.csv_label = QLabel("未导入文件")
         toolbar.addWidget(self.csv_label, 1)
 
-        self.import_button = QPushButton("导入CSV")
+        self.import_button = QPushButton("导入文件")
         toolbar.addWidget(self.import_button)
 
         toolbar.addWidget(QLabel("发送模式"))
@@ -286,7 +286,7 @@ class SimulatePanel(QWidget):
             self._stop()
             return
         if not self._csv_rows:
-            self.message.emit("请先导入 CSV 数据")
+            self.message.emit("请先导入数据文件")
             return
         self._playing = True
         self._row_index = 0

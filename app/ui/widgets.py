@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QComboBox, QStyledItemDelegate
+from PySide6.QtWidgets import QComboBox, QStyle, QStyledItemDelegate
 
 
 class ComboDelegate(QStyledItemDelegate):
@@ -35,22 +35,24 @@ class ComboDelegate(QStyledItemDelegate):
         self.initStyleOption(opt, index)
         # 填充单元格背景（处理选中高亮、交替行色等）
         opt.widget.style().drawPrimitive(
-            opt.widget.style().PE_PanelItemViewItem, opt, painter, opt.widget)
+            QStyle.PrimitiveElement.PE_PanelItemViewItem, opt, painter, opt.widget)
         # 不绘制文字，由持久化编辑器控件覆盖
 
 
 class SpinDelegate(QStyledItemDelegate):
     def __init__(self, minimum: int, maximum: int, parent=None,
-                 special_zero_text: str = "") -> None:
+                 special_zero_text: str = "", step: int = 1) -> None:
         super().__init__(parent)
         self._min = minimum
         self._max = maximum
         self._zero_text = special_zero_text
+        self._step = step
 
     def createEditor(self, parent, option, index):
         from PySide6.QtWidgets import QSpinBox
         spin = QSpinBox(parent)
         spin.setRange(self._min, self._max)
+        spin.setSingleStep(self._step)
         if self._zero_text:
             spin.setSpecialValueText(self._zero_text)
         return spin
@@ -74,4 +76,4 @@ class SpinDelegate(QStyledItemDelegate):
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
         opt.widget.style().drawPrimitive(
-            opt.widget.style().PE_PanelItemViewItem, opt, painter, opt.widget)
+            QStyle.PrimitiveElement.PE_PanelItemViewItem, opt, painter, opt.widget)

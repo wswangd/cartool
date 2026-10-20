@@ -52,7 +52,7 @@ class ListPanel(QWidget):
         self.table.setItemDelegateForColumn(COL_DLC,
                                             ComboDelegate(DLC_OPTIONS, self))
         self.table.setItemDelegateForColumn(COL_PERIOD,
-                                            SpinDelegate(0, 600000, self))
+                                            SpinDelegate(0, 600000, self, step=5))
         self.table.setItemDelegateForColumn(COL_REPEAT,
                                             SpinDelegate(0, 10000000, self, "无限"))
 
@@ -69,7 +69,7 @@ class ListPanel(QWidget):
             ("导入…", self._on_import), ("导出…", self._on_export),
         )
         send_buttons = (
-            ("发送选中", self._on_send_selected), ("全部发送", self._on_send_all),
+            ("全部发送", self._on_send_all),
             ("开始定时", self._on_start_periodic), ("停止定时", self._on_stop_periodic),
         )
         toolbar = QHBoxLayout()
@@ -159,11 +159,6 @@ class ListPanel(QWidget):
         self.model.clear()
         self.model.reset_sent()
 
-    def _on_send_selected(self) -> None:
-        frames = [item.frame.copy() for row in self._selected_rows()
-                  if (item := self.model.item(row))]
-        self._dispatch(frames, "选中")
-
     def _on_send_all(self) -> None:
         frames = [item.frame.copy() for item in self.model.enabled_items()]
         self._dispatch(frames, "启用")
@@ -240,13 +235,15 @@ class ListPanel(QWidget):
         self.message.emit(f"已导入 {len(items)} 条报文")
 
     def _on_export(self) -> None:
+        self.table.setFocus(Qt.OtherFocusReason)
         items = self.model.items()
         if not items:
             self.message.emit("列表是空的，没有可导出的报文")
             return
         path, _ = QFileDialog.getSaveFileName(
             self, "导出报文列表", str(Path(self._last_dir) / "报文列表.csv"),
-            "CSV (*.csv);;JSON (*.json)")
+            "CSV (*.csv);;JSON (*.json)",
+            options=QFileDialog.DontUseNativeDialog)
         if not path:
             return
         self._last_dir = str(Path(path).parent)

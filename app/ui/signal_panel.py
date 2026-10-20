@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox,
                                QGridLayout, QHBoxLayout, QLabel,
@@ -71,11 +73,12 @@ class NoWheelSlider(QSlider):
 
 
 class ValueComboBox(QComboBox):
-    """可编辑但只读的 combo，下拉关闭后恢复自定义显示（数值或状态名）。"""
+    """按当前状态切换数值编辑与只读状态显示。"""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.setEditable(True)
+        self.setInsertPolicy(QComboBox.NoInsert)
         self.lineEdit().setReadOnly(True)
         self._hide_callback = None
 
@@ -135,11 +138,22 @@ class _Column:
 
         self.check = QCheckBox(sig.name)
         self.check.setChecked(sig.enabled)
-        layout.addWidget(self.check, alignment=Qt.AlignHCenter)
+
+        self.value_label = QLabel()
+        self.value_label.setAlignment(Qt.AlignCenter)
+        self.value_label.setStyleSheet("color: #000000; font-size: 28px; font-weight: 700;")
+        self.value_label.setMinimumWidth(72)
+        details = QVBoxLayout()
+        details.setSpacing(2)
+        details.addWidget(self.check, alignment=Qt.AlignHCenter)
 
         unit_label = QLabel(f"单位: {sig.unit}")
         unit_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(unit_label)
+        details.addWidget(unit_label)
+        summary = QHBoxLayout()
+        summary.addWidget(self.value_label)
+        summary.addLayout(details, 1)
+        layout.addLayout(summary)
 
 
         self.spin = None
@@ -151,6 +165,7 @@ class _Column:
             for state in sig.states:
                 self.combo.addItem(state.name)
             self.combo._hide_callback = lambda c=self.combo: self._on_combo_hide(c)
+            self.combo.lineEdit().editingFinished.connect(self._on_value_edited)
             layout.addWidget(self.combo)
             self._refresh_combo_display()
         else:
@@ -162,6 +177,7 @@ class _Column:
             self.spin.setStepType(QDoubleSpinBox.StepType.DefaultStepType)
             self.spin.setMinimumWidth(120)
             layout.addWidget(self.spin)
+        self._refresh_value_display()
 
     def phys_value(self) -> float:
         """当前物理值（精度与分辨率一致）。"""
@@ -196,8 +212,11 @@ class _Column:
 
     def _refresh_combo_display(self) -> None:
         """正常状态时 combo 显示当前数值，其他状态显示状态名；下拉项始终保持原始名称。"""
+        self._refresh_value_display()
         if self.combo is None:
             return
+        self.combo.lineEdit().setReadOnly(
+            self._state_idx != 0 or self.sig.states[0].raw is not None)
         if self._state_idx == 0:
             val = self.phys_value()
             self.combo.blockSignals(True)
@@ -208,6 +227,27 @@ class _Column:
             self.combo.blockSignals(True)
             self.combo.setEditText(name)
             self.combo.blockSignals(False)
+
+    def _refresh_value_display(self) -> None:
+        value = self.phys_value()
+        if self.combo is not None:
+            raw = self.sig.states[self._state_idx].raw
+            if raw is not None:
+                value = self.sig.raw_to_phys(raw)
+        text = f"{value:.{self.decimals}f}".rstrip("0").rstrip(".")
+        self.value_label.setText(text if text != "-0" else "0")
+
+    def _on_value_edited(self) -> None:
+        if self.combo.lineEdit().isReadOnly():
+            return
+        try:
+            value = float(self.combo.currentText())
+        except ValueError:
+            self._refresh_combo_display()
+            return
+        if math.isfinite(value):
+            self.set_phys(value)
+        self._refresh_combo_display()
 
     def _on_combo_hide(self, combo: QComboBox) -> None:
         """下拉关闭后：处理重新选择同一项的情况，并恢复自定义显示。"""

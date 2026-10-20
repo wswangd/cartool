@@ -1,6 +1,6 @@
 {
   "bus": {
-    "backend": "zlg",
+    "backend": "sim",
     "device_type": 4,
     "device_index": 0,
     "channel": 0,
@@ -11,14 +11,14 @@
     "acc_mask": 4294967295
   },
   "trace": {
-    "capacity": 5100,
+    "capacity": 3100,
     "autoscroll": true,
     "direction": "全部"
   },
   "send": {
     "period_ms": 100
   },
-  "send_splitter": "AAAA/wAAAAEAAAACAAAAZwAAAJwB/////wEAAAACAA==",
-  "main_splitter": "AAAA/wAAAAEAAAADAAAAnQAAASUAAACWAf////8BAAAAAgA=",
+  "send_splitter": "AAAA/wAAAAEAAAACAAAAggAAAPcB/////wEAAAACAA==",
+  "main_splitter": "AAAA/wAAAAEAAAADAAAAnQAAAZsAAAAgAf////8BAAAAAgA=",
   "geometry": "AdnQywADAAAAAAAA////+QAABP8AAAKfAAAAAAAAABUAAAPKAAACnQAAAAACAAAABQAAAAAAAAAAFwAABP8AAAKf"
 }

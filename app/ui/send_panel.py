@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRegularExpression, Qt, Signal
+from PySide6.QtCore import QEvent, QRegularExpression, Qt, Signal
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QSpinBox,
@@ -25,6 +25,7 @@ class SendPanel(QGroupBox):
 
     def __init__(self, parent=None) -> None:
         super().__init__("报文发送", parent)
+        self._backspace_target: QLineEdit | None = None
         self._build()
         self._wire()
         self._refresh_bytes()
@@ -55,8 +56,10 @@ class SendPanel(QGroupBox):
         for _ in range(DLC_MAX):
             edit = QLineEdit("00")
             edit.setValidator(hex_validator)
+            edit.setMaxLength(2)
             edit.setFixedWidth(34)
             edit.setAlignment(Qt.AlignCenter)
+            edit.installEventFilter(self)
             self.byte_edits.append(edit)
 
         row1 = QHBoxLayout()
@@ -88,6 +91,7 @@ class SendPanel(QGroupBox):
         self.periodic_check = QCheckBox("定时自动发送")
         self.period_ms = QSpinBox()
         self.period_ms.setRange(1, 600000)
+        self.period_ms.setSingleStep(5)
         self.period_ms.setValue(100)
         self.period_ms.setSuffix(" ms")
         self.period_repeat = QSpinBox()
@@ -126,6 +130,9 @@ class SendPanel(QGroupBox):
         self.format_combo.currentTextChanged.connect(self._on_format_changed)
         self.period_ms.valueChanged.connect(self._on_periodic_edited)
         self.period_repeat.valueChanged.connect(self._on_periodic_edited)
+        for index, edit in enumerate(self.byte_edits):
+            edit.textEdited.connect(
+                lambda text, byte_index=index: self._on_byte_edited(byte_index, text))
 
     def _refresh_bytes(self) -> None:
         remote = self.type_combo.currentText() == "远程帧"
@@ -142,6 +149,64 @@ class SendPanel(QGroupBox):
     def _on_format_changed(self, text: str) -> None:
         limit = 0x1FFFFFFF if text == "扩展帧" else 0x7FF
         self.id_edit.setToolTip(f"最大值 0x{limit:X}")
+
+    def _on_byte_edited(self, index: int, text: str) -> None:
+        """输入完整字节后将焦点移到下一个有效数据字节。"""
+        current = self.byte_edits[index]
+        if len(text) != 2 or current.cursorPosition() != 2:
+            return
+        next_index = index + 1
+        if next_index >= self.dlc:
+            return
+        next_edit = self.byte_edits[next_index]
+        if next_edit.isEnabled():
+            next_edit.setFocus()
+            next_edit.selectAll()
+
+    def eventFilter(self, watched, event) -> bool:
+        if watched not in self.byte_edits or event.type() != QEvent.KeyPress:
+            return super().eventFilter(watched, event)
+
+        returned_by_backspace = watched is self._backspace_target
+        self._backspace_target = None
+        if (event.key() in (Qt.Key_Left, Qt.Key_Right)
+                and not (event.modifiers() & ~Qt.KeypadModifier)):
+            moving_left = event.key() == Qt.Key_Left
+            if watched.hasSelectedText():
+                position = watched.selectionStart()
+                if not moving_left:
+                    position += len(watched.selectedText())
+                watched.setCursorPosition(position)
+                return True
+            position = watched.cursorPosition()
+            if moving_left and position > 0:
+                watched.setCursorPosition(position - 1)
+            elif not moving_left and position < len(watched.text()):
+                watched.setCursorPosition(position + 1)
+            else:
+                index = self.byte_edits.index(watched)
+                target_index = index - 1 if moving_left else index + 1
+                if 0 <= target_index < self.dlc:
+                    target = self.byte_edits[target_index]
+                    if target.isEnabled():
+                        target.setFocus()
+                        target.setCursorPosition(len(target.text()) if moving_left else 0)
+            return True
+        if event.key() == Qt.Key_Backspace:
+            if returned_by_backspace:
+                return super().eventFilter(watched, event)
+            index = self.byte_edits.index(watched)
+            selected_all = (watched.hasSelectedText()
+                            and watched.selectedText() == watched.text())
+            if index > 0 and (not watched.text() or watched.cursorPosition() == 0
+                              or selected_all):
+                previous = self.byte_edits[index - 1]
+                if previous.isEnabled():
+                    previous.setFocus()
+                    previous.selectAll()
+                    self._backspace_target = previous
+                    return True
+        return super().eventFilter(watched, event)
 
     @property
     def dlc(self) -> int:
