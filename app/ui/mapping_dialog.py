@@ -377,7 +377,7 @@ class MappingDialog(QDialog):
             id_edit = QLineEdit(f"{can_id:08X}")
             id_edit.setReadOnly(True)
             self.cycle_table.setCellWidget(row, 0, id_edit)
-            spin_cycle = make_int_spin(self._cycles.get(can_id, 100), 10, 10000)
+            spin_cycle = make_int_spin(self._cycles.get(can_id, 100), 10, 100000)
             spin_cycle.setSuffix(" ms")
             self.cycle_table.setCellWidget(row, 1, spin_cycle)
 

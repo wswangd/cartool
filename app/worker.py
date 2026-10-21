@@ -32,10 +32,23 @@ class PeriodicTask:
     sent: int = 0
 
 
+@dataclass
+class SequenceTask:
+    entries: list[tuple[int, CanFrame, int]]
+    repeats: int
+    next_due: float
+    interval_ms: int
+    cycle_interval_ms: int
+    index: int = 0
+    cycles: int = 0
+
+
 class BusWorker(QThread):
     records = Signal(object)    # list[TraceRecord]
     progress = Signal(object)   # dict[uid, sent]
     task_done = Signal(int)     # uid，有限次数发完
+    sequence_done = Signal()
+    sequence_progress = Signal(int, int)
     failure = Signal(str)
     status = Signal(object)     # dict | None
     counters = Signal(int, int, int)   # 累计发送、累计接收、错误帧
@@ -47,6 +60,7 @@ class BusWorker(QThread):
         self._stop = threading.Event()
         self._immediate: deque[CanFrame] = deque()
         self._periodic: dict[int, PeriodicTask] = {}
+        self._sequence: SequenceTask | None = None
         self._seq = itertools.count(1)
         self._tx_total = 0
         self._rx_total = 0
@@ -78,6 +92,22 @@ class BusWorker(QThread):
     def stop_all_periodic(self) -> None:
         with self._lock:
             self._periodic.clear()
+            self._sequence = None
+
+    def start_sequence(self, tasks: list[tuple], repeats: int = 0,
+                       interval_ms: int = 100, cycle_interval_ms: int = 100) -> None:
+        entries = [(uid, frame.copy(), max(1, int(period)))
+                   for uid, frame, period, _ in tasks]
+        if not entries:
+            return
+        with self._lock:
+            self._sequence = SequenceTask(entries, max(0, int(repeats)),
+                                          time.perf_counter(), max(1, int(interval_ms)),
+                                          max(1, int(cycle_interval_ms)))
+
+    def stop_sequence(self) -> None:
+        with self._lock:
+            self._sequence = None
 
     def active_uids(self) -> list[int]:
         with self._lock:
@@ -102,6 +132,7 @@ class BusWorker(QThread):
             try:
                 idle &= self._flush_immediate()
                 idle &= self._run_periodic(now)
+                idle &= self._run_sequence(time.perf_counter())
                 idle &= self._pump_rx()
                 self._emit_progress(now)
                 self._emit_status(now)
@@ -111,6 +142,29 @@ class BusWorker(QThread):
         with self._lock:
             self._immediate.clear()
             self._periodic.clear()
+            self._sequence = None
+
+    def _run_sequence(self, now: float) -> bool:
+        with self._lock:
+            task = self._sequence
+            if task is None:
+                return True
+            if now < task.next_due:
+                return False
+            uid, frame, period = task.entries[task.index]
+            self._transmit([frame])
+            self.sequence_progress.emit(uid, task.cycles + 1)
+            task.index += 1
+            if task.index == len(task.entries):
+                task.index = 0
+                task.cycles += 1
+                if task.repeats and task.cycles >= task.repeats:
+                    self._sequence = None
+                    self.sequence_done.emit()
+                    return False
+            delay = task.cycle_interval_ms if task.index == 0 else task.interval_ms
+            task.next_due = time.perf_counter() + delay / 1000.0
+        return False
 
     def _flush_immediate(self) -> bool:
         with self._lock:

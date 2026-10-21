@@ -78,8 +78,8 @@ class MainWindow(QMainWindow):
         list_group.setMinimumHeight(32)
         self._send_splitter.setStretchFactor(0, 0)
         self._send_splitter.setStretchFactor(1, 1)
-        self._send_splitter.setCollapsible(0, False)
-        self._send_splitter.setCollapsible(1, False)
+        self._send_splitter.setCollapsible(0, True)
+        self._send_splitter.setCollapsible(1, True)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._send_splitter, "报文发送")
@@ -99,10 +99,12 @@ class MainWindow(QMainWindow):
         self._main_splitter.setStretchFactor(0, 0)
         self._main_splitter.setStretchFactor(1, 3)
         self._main_splitter.setStretchFactor(2, 2)
-        self.tabs.setMinimumHeight(120)
-        self._main_splitter.setCollapsible(0, False)
-        self._main_splitter.setCollapsible(1, False)
-        self._main_splitter.setCollapsible(2, False)
+        self.tabs.setMinimumHeight(32)
+        self._main_splitter.setHandleWidth(7)
+        self._send_splitter.setHandleWidth(7)
+        self._main_splitter.setCollapsible(0, True)
+        self._main_splitter.setCollapsible(1, True)
+        self._main_splitter.setCollapsible(2, True)
 
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -129,8 +131,6 @@ class MainWindow(QMainWindow):
         self.device_panel.reset_requested.connect(self._on_reset)
         self.device_panel.clear_buffer_requested.connect(self._on_clear_buffer)
 
-        self.send_panel.send_requested.connect(self._on_send_frame)
-        self.send_panel.batch_requested.connect(self._on_batch)
         self.send_panel.add_to_list_requested.connect(self._on_add_to_list)
         self.send_panel.periodic_requested.connect(self._on_single_periodic)
         self.send_panel.periodic_stopped.connect(self._on_single_periodic_off)
@@ -138,6 +138,7 @@ class MainWindow(QMainWindow):
 
         self.list_panel.send_frames.connect(self._on_send_frames)
         self.list_panel.start_tasks.connect(self._on_start_tasks)
+        self.list_panel.start_sequence.connect(self._on_start_sequence)
         self.list_panel.stop_tasks.connect(self._on_stop_tasks)
         self.list_panel.message.connect(self._show_message)
         self.list_panel.model.parse_error.connect(self._show_message)
@@ -190,6 +191,8 @@ class MainWindow(QMainWindow):
         self._worker.records.connect(self.trace_panel.add_records)
         self._worker.progress.connect(self._on_progress)
         self._worker.task_done.connect(self._on_task_done)
+        self._worker.sequence_done.connect(self.list_panel.sequence_finished)
+        self._worker.sequence_progress.connect(self.list_panel.show_sequence_progress)
         self._worker.failure.connect(self._on_failure)
         self._worker.status.connect(self._on_bus_status)
         self._worker.counters.connect(self._on_counters)
@@ -223,8 +226,7 @@ class MainWindow(QMainWindow):
             except ZlgError:
                 pass
             self._bus = None
-        if self.send_panel.periodic_check.isChecked():
-            self.send_panel.periodic_check.setChecked(False)
+        self.send_panel.set_running(False)
 
     def _set_connected(self, connected: bool) -> None:
         self.send_panel.set_bus_enabled(connected)
@@ -257,9 +259,6 @@ class MainWindow(QMainWindow):
     def _on_send_frame(self, frame: CanFrame) -> None:
         self._on_send_frames([frame])
 
-    def _on_batch(self, frame: CanFrame, count: int) -> None:
-        self._on_send_frames([frame.copy() for _ in range(count)])
-
     def _on_send_frames(self, frames: list[CanFrame]) -> None:
         if self._worker is None:
             self._show_message("请先打开设备")
@@ -272,7 +271,7 @@ class MainWindow(QMainWindow):
 
     def _on_single_periodic(self, frame: CanFrame, period_ms: int, repeat: int) -> None:
         if self._worker is None:
-            self.send_panel.periodic_check.setChecked(False)
+            self.send_panel.set_running(False)
             self._show_message("请先打开设备")
             return
         self._worker.start_periodic(SINGLE_SEND_UID, frame, period_ms, repeat)
@@ -292,8 +291,14 @@ class MainWindow(QMainWindow):
     def _on_stop_tasks(self, uids: list[int]) -> None:
         if self._worker is None:
             return
+        self._worker.stop_sequence()
         for uid in uids:
             self._worker.stop_periodic(uid)
+
+    def _on_start_sequence(self, tasks: list[tuple], repeats: int,
+                           interval_ms: int, cycle_interval_ms: int) -> None:
+        if self._worker is not None:
+            self._worker.start_sequence(tasks, repeats, interval_ms, cycle_interval_ms)
 
     # ---------------------------------------------------------------- 信号实验
 
@@ -408,10 +413,7 @@ class MainWindow(QMainWindow):
 
     def _on_task_done(self, uid: int) -> None:
         if uid == SINGLE_SEND_UID:
-            check = self.send_panel.periodic_check
-            check.blockSignals(True)
-            check.setChecked(False)
-            check.blockSignals(False)
+            self.send_panel.set_running(False)
             self._show_message("单帧定时发送已按设定次数完成")
         else:
             self.list_panel.mark_task_finished(uid)
@@ -461,7 +463,7 @@ class MainWindow(QMainWindow):
         trace = settings.get("trace", {})
         if isinstance(trace, dict):
             try:
-                self.trace_panel.set_capacity(int(trace.get("capacity", 5000)))
+                self.trace_panel.set_capacity(1000)
                 self.trace_panel.set_autoscroll(bool(trace.get("autoscroll", True)))
                 self.trace_panel.set_direction_filter(str(trace.get("direction", "全部")))
             except (TypeError, ValueError):
@@ -476,6 +478,14 @@ class MainWindow(QMainWindow):
         if isinstance(geometry, str):
             self.restoreGeometry(QByteArray.fromBase64(geometry.encode("ascii")))
         send = settings.get("send", {})
+        list_header = settings.get("list_header")
+        if isinstance(list_header, str):
+            try:
+                self.list_panel.table.horizontalHeader().restoreState(
+                    QByteArray.fromBase64(list_header.encode("ascii")))
+            except (UnicodeEncodeError, ValueError):
+                pass
+            self.list_panel._refresh_send_state()
         if isinstance(send, dict) and "period_ms" in send:
             try:
                 self.send_panel.period_ms.setValue(int(send["period_ms"]))
@@ -491,6 +501,7 @@ class MainWindow(QMainWindow):
                 "direction": self.trace_panel.direction.currentText(),
             },
             "send": {"period_ms": self.send_panel.period_ms.value()},
+            "list_header": bytes(self.list_panel.table.horizontalHeader().saveState().toBase64()).decode("ascii"),
             "send_splitter": bytes(self._send_splitter.saveState().toBase64()).decode("ascii"),
             "main_splitter": bytes(self._main_splitter.saveState().toBase64()).decode("ascii"),
             "geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
@@ -498,7 +509,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         running = len(self.list_panel.running_uids())
-        if self.send_panel.periodic_check.isChecked():
+        if self.send_panel.is_running():
             running += 1
         running += len(self._signal_uids)
         if running:

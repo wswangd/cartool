@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QRegularExpression, Qt, Signal
 from PySide6.QtGui import QRegularExpressionValidator
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QGroupBox, QHBoxLayout,
+from PySide6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QSpinBox,
                                QVBoxLayout)
 
@@ -16,8 +16,6 @@ _ID_RE = "[0-9A-Fa-f]{0,8}"
 
 
 class SendPanel(QGroupBox):
-    send_requested = Signal(object)             # CanFrame
-    batch_requested = Signal(object, int)       # CanFrame, 次数
     add_to_list_requested = Signal(object)      # CanFrame
     periodic_requested = Signal(object, int, int)  # CanFrame, 周期ms, 次数
     periodic_stopped = Signal()
@@ -26,9 +24,12 @@ class SendPanel(QGroupBox):
     def __init__(self, parent=None) -> None:
         super().__init__("报文发送", parent)
         self._backspace_target: QLineEdit | None = None
+        self._running = False
+        self._bus_enabled = False
         self._build()
         self._wire()
         self._refresh_bytes()
+        self.set_bus_enabled(False)
 
     # ------------------------------------------------------------------ 界面
 
@@ -43,7 +44,7 @@ class SendPanel(QGroupBox):
         self.send_type_combo = QComboBox()
         self.send_type_combo.addItems(SEND_TYPE_OPTIONS)
 
-        self.id_edit = QLineEdit("7E0")
+        self.id_edit = QLineEdit("100")
         self.id_edit.setValidator(id_validator)
         self.id_edit.setFixedWidth(110)
         self.id_edit.setAlignment(Qt.AlignCenter)
@@ -83,12 +84,6 @@ class SendPanel(QGroupBox):
 
         self.send_button = QPushButton("发送")
         self.add_button = QPushButton("加入列表")
-        self.batch_count = QSpinBox()
-        self.batch_count.setRange(1, 100000)
-        self.batch_count.setValue(10)
-        self.batch_button = QPushButton("批量发送")
-
-        self.periodic_check = QCheckBox("定时自动发送")
         self.period_ms = QSpinBox()
         self.period_ms.setRange(1, 600000)
         self.period_ms.setSingleStep(5)
@@ -101,18 +96,12 @@ class SendPanel(QGroupBox):
         self.period_repeat.setToolTip("发送次数，0 表示无限")
 
         row3 = QHBoxLayout()
-        row3.addWidget(self.send_button)
-        row3.addWidget(self.add_button)
-        row3.addSpacing(16)
-        row3.addWidget(QLabel("批量次数"))
-        row3.addWidget(self.batch_count)
-        row3.addWidget(self.batch_button)
-        row3.addSpacing(16)
-        row3.addWidget(self.periodic_check)
-        row3.addWidget(QLabel("周期"))
-        row3.addWidget(self.period_ms)
         row3.addWidget(QLabel("次数"))
         row3.addWidget(self.period_repeat)
+        row3.addWidget(QLabel("周期"))
+        row3.addWidget(self.period_ms)
+        row3.addWidget(self.add_button)
+        row3.addWidget(self.send_button)
         row3.addStretch(1)
 
         layout = QVBoxLayout(self)
@@ -123,13 +112,9 @@ class SendPanel(QGroupBox):
     def _wire(self) -> None:
         self.send_button.clicked.connect(self._on_send)
         self.add_button.clicked.connect(self._on_add)
-        self.batch_button.clicked.connect(self._on_batch)
-        self.periodic_check.toggled.connect(self._on_periodic_toggled)
         self.type_combo.currentTextChanged.connect(self._refresh_bytes)
         self.dlc_combo.currentTextChanged.connect(self._refresh_bytes)
         self.format_combo.currentTextChanged.connect(self._on_format_changed)
-        self.period_ms.valueChanged.connect(self._on_periodic_edited)
-        self.period_repeat.valueChanged.connect(self._on_periodic_edited)
         for index, edit in enumerate(self.byte_edits):
             edit.textEdited.connect(
                 lambda text, byte_index=index: self._on_byte_edited(byte_index, text))
@@ -138,7 +123,7 @@ class SendPanel(QGroupBox):
         remote = self.type_combo.currentText() == "远程帧"
         dlc = self.dlc
         for i, edit in enumerate(self.byte_edits):
-            edit.setEnabled(not remote and i < dlc)
+            edit.setEnabled(not self._running and not remote and i < dlc)
         if remote:
             for edit in self.byte_edits:
                 edit.setStyleSheet("background: #ECEFF1;")
@@ -238,47 +223,39 @@ class SendPanel(QGroupBox):
     # ------------------------------------------------------------------ 动作
 
     def _on_send(self) -> None:
+        if self._running:
+            self.periodic_stopped.emit()
+            self.set_running(False)
+            return
+        if not self._bus_enabled:
+            return
         frame = self._validated()
         if frame:
-            self.send_requested.emit(frame)
-
-    def _on_batch(self) -> None:
-        frame = self._validated()
-        if frame:
-            self.batch_requested.emit(frame, self.batch_count.value())
+            self.set_running(True)
+            self.periodic_requested.emit(frame, self.period_ms.value(),
+                                         self.period_repeat.value())
 
     def _on_add(self) -> None:
         frame = self._validated()
         if frame:
             self.add_to_list_requested.emit(frame)
 
-    def _on_periodic_toggled(self, checked: bool) -> None:
-        if not checked:
-            self.periodic_stopped.emit()
-            return
-        frame = self._validated()
-        if frame is None:
-            self.periodic_check.blockSignals(True)
-            self.periodic_check.setChecked(False)
-            self.periodic_check.blockSignals(False)
-            return
-        self.periodic_requested.emit(frame, self.period_ms.value(),
-                                     self.period_repeat.value())
+    def is_running(self) -> bool:
+        return self._running
 
-    def _on_periodic_edited(self) -> None:
-        if not self.periodic_check.isChecked():
-            return
-        frame = self._validated()
-        if frame is None:
-            return
-        self.periodic_requested.emit(frame, self.period_ms.value(),
-                                     self.period_repeat.value())
+    def set_running(self, running: bool) -> None:
+        self._running = running
+        self.send_button.setText("停止" if running else "发送")
+        for widget in (self.format_combo, self.type_combo, self.send_type_combo,
+                       self.id_edit, self.dlc_combo, self.period_ms, self.period_repeat):
+            widget.setEnabled(not running)
+        self._refresh_bytes()
 
     def set_bus_enabled(self, enabled: bool) -> None:
-        for widget in (self.send_button, self.batch_button, self.periodic_check):
-            widget.setEnabled(enabled)
-        if not enabled and self.periodic_check.isChecked():
-            self.periodic_check.setChecked(False)
+        self._bus_enabled = enabled
+        self.send_button.setEnabled(enabled)
+        if not enabled:
+            self.set_running(False)
 
     def set_frame(self, frame: CanFrame) -> None:
         self.format_combo.setCurrentText(frame.format_text)

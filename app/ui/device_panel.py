@@ -115,11 +115,15 @@ class DevicePanel(QGroupBox):
         row3.addSpacing(12)
         row3.addWidget(self.status_label, 1)
 
+        self.settings_widget = QWidget()
+        settings_layout = QVBoxLayout(self.settings_widget)
+        settings_layout.setContentsMargins(0, 0, 0, 0)
+        settings_layout.addLayout(row1)
+        settings_layout.addLayout(row2)
+        settings_layout.addWidget(self.show_advanced)
+        settings_layout.addWidget(advanced)
         layout = QVBoxLayout(self)
-        layout.addLayout(row1)
-        layout.addLayout(row2)
-        layout.addWidget(self.show_advanced)
-        layout.addWidget(advanced)
+        layout.addWidget(self.settings_widget)
         layout.addLayout(row3)
 
     def _wire(self) -> None:

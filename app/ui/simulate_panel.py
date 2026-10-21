@@ -114,9 +114,10 @@ class SimulatePanel(QWidget):
         self.send_mode.setMinimumWidth(100)
         toolbar.addWidget(self.send_mode)
 
-        toolbar.addWidget(QLabel("行周期"))
+        toolbar.addWidget(QLabel("周期"))
         self.row_period = QSpinBox()
         self.row_period.setRange(1, 600000)
+        self.row_period.setSingleStep(5)
         self.row_period.setValue(100)
         self.row_period.setSuffix(" ms")
         toolbar.addWidget(self.row_period)
@@ -136,6 +137,9 @@ class SimulatePanel(QWidget):
         self.preview.verticalHeader().setVisible(False)
         self.preview.verticalHeader().setDefaultSectionSize(22)
         header = self.preview.horizontalHeader()
+        header_font = self.preview.font()
+        header_font.setBold(True)
+        header.setFont(header_font)
         header.setStretchLastSection(True)
 
         # 进度

@@ -259,7 +259,7 @@ _COLOR_ERR = QColor("#C62828")
 class TraceModel(QAbstractTableModel):
     """收发报文日志，超出容量时丢弃最旧的记录。"""
 
-    DEFAULT_CAPACITY = 5000
+    DEFAULT_CAPACITY = 1000
     MAX_CAPACITY = 500000
 
     def __init__(self, parent=None, capacity: int = DEFAULT_CAPACITY) -> None:
