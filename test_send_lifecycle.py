@@ -41,13 +41,16 @@ class SendLifecycleTests(unittest.TestCase):
         self.assertFalse(self.window.signal_panel._running)
         self.assertFalse(self.window._signal_uids)
         self.assertTrue(self.window.simulate_panel.import_button.isEnabled())
-        self.assertTrue(self.window.signal_panel.start_button.isEnabled())
+        self.assertFalse(self.window.signal_panel.start_button.isEnabled())
+        self.assertFalse(self.window.simulate_panel.start_button.isEnabled())
         self.window.device_panel.set_config(BusConfig(backend=BACKEND_SIM))
         worker = Mock()
         bus = Mock(info="test")
         with patch("app.ui.main_window.create_bus", return_value=bus), patch(
                 "app.ui.main_window.BusWorker", return_value=worker):
             self.window._on_connect()
+        self.assertTrue(self.window.signal_panel.start_button.isEnabled())
+        self.assertTrue(self.window.simulate_panel.start_button.isEnabled())
         worker.start.assert_called_once()
         worker.start_periodic.assert_not_called()
         self.assertTrue(self.window.simulate_panel.import_button.isEnabled())
@@ -62,7 +65,8 @@ class SendLifecycleTests(unittest.TestCase):
         self.assertFalse(simulator.is_playing())
         self.assertFalse(simulator._playback_timer.isActive())
         self.assertTrue(simulator.import_button.isEnabled())
-        self.assertTrue(self.window.signal_panel.start_button.isEnabled())
+        self.assertFalse(self.window.signal_panel.start_button.isEnabled())
+        self.assertFalse(self.window.simulate_panel.start_button.isEnabled())
         self.assertTrue(self.window.signal_panel.mapping_button.isEnabled())
 
     def test_disabling_all_signals_stops_and_unlocks_import(self):

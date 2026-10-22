@@ -23,3 +23,8 @@ signals_compare.txt
 # Regenerable test output
 test_large.csv
 test_csv_export.csv
+
+# Local dependency sandbox and artifact previews
+.codex-test-deps/
+outputs/**/*.png
+outputs/**/*.ndjson

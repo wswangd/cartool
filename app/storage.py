@@ -19,8 +19,8 @@ else:
 SETTINGS_PATH = APP_DIR / "settings.json"
 FILE_VERSION = 1
 
-LIST_CSV_HEADERS = ("备注", "ID(hex)", "帧格式", "帧类型", "发送类型",
-                    "长度", "数据(hex)", "周期(ms)", "次数")
+LIST_CSV_HEADERS = ("ID(hex)", "帧格式", "帧类型", "发送类型",
+                    "长度", "数据(hex)", "周期(ms)", "次数", "备注")
 
 
 class StorageError(Exception):
@@ -82,10 +82,10 @@ def save_list_csv(path: Path, items: list[SendItem]) -> None:
         for item in items:
             frame = item.frame
             writer.writerow([
-                item.note, f"{frame.frame_id:08X}",
+                f"{frame.frame_id:08X}",
                 frame.format_text, frame.type_text, frame.send_type_text,
                 frame.dlc, format_data(frame.data), item.period_ms,
-                item.repeat if item.repeat > 0 else "无限",
+                item.repeat if item.repeat > 0 else "无限", item.note,
             ])
 
 
@@ -97,7 +97,7 @@ def load_list_csv(path: Path) -> list[dict]:
     header = [cell.strip() for cell in rows[0]]
     if "ID(hex)" not in header:
         raise StorageError("CSV 缺少表头行，应包含：" + ",".join(LIST_CSV_HEADERS))
-    index = {name: header.index(name) for name in LIST_CSV_HEADERS if name in header}
+    index = {name: header.index(name) for name in (*LIST_CSV_HEADERS, "启用") if name in header}
 
     def cell(row: list[str], name: str, default: str = "") -> str:
         pos = index.get(name)
@@ -109,7 +109,7 @@ def load_list_csv(path: Path) -> list[dict]:
             continue
         try:
             messages.append({
-                "enabled": cell(row, "启用", "1") not in ("0", "否", "false", "False"),
+                "enabled": False,
                 "note": cell(row, "备注"),
                 "id": cell(row, "ID(hex)", "0"),
                 "extended": cell(row, "帧格式", "标准帧") == "扩展帧",

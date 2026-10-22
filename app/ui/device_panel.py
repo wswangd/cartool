@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from .widgets import OperationButton
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QSpinBox,
@@ -99,7 +101,7 @@ class DevicePanel(QGroupBox):
         row2.addWidget(self.mode)
         row2.addStretch(1)
 
-        self.toggle_button = QPushButton("打开设备")
+        self.toggle_button = OperationButton("打开设备")
         self.reset_button = QPushButton("复位通道")
         self.clear_button = QPushButton("清空缓冲")
         self.status_label = QLabel("未连接")

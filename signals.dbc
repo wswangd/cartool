@@ -1,0 +1,85 @@
+VERSION "Generated from signals.json"
+
+NS_ :
+    CM_
+    BA_DEF_
+    BA_
+    BA_DEF_DEF_
+
+BS_:
+
+BU_: ECU Receiver
+
+BO_ 2364539904 Msg_0CF00400: 8 ECU
+ SG_ EngineSpeed : 24|16@1+ (0.125,0) [0|8000] "rpm" Receiver
+ SG_ EngineTorque : 16|8@1+ (1,-125) [-125|125] "%" Receiver
+
+BO_ 2365484270 Msg_0CFE6CEE: 8 ECU
+ SG_ VehicleSpeed : 48|16@1+ (0.0039,0) [0|251] "km/h" Receiver
+
+BO_ 2566725632 Msg_18FD2000: 8 ECU
+ SG_ T5 : 16|16@1+ (0.0312,-273) [-273|1734] "℃" Receiver
+
+BO_ 2499624448 Msg_14FD3E00: 8 ECU
+ SG_ T6 : 0|16@1+ (0.0312,-273) [-273|1734] "℃" Receiver
+ SG_ T7 : 24|16@1+ (0.0312,-273) [-273|1734] "℃" Receiver
+
+BO_ 2565869137 Msg_18F00E51: 8 ECU
+ SG_ UpstreamNOx : 0|16@1+ (0.05,-200) [0|3012] "ppm" Receiver
+
+BO_ 2565869394 Msg_18F00F52: 8 ECU
+ SG_ DownstreamNOx : 0|16@1+ (0.05,-200) [0|3012] "ppm" Receiver
+
+BO_ 2566845696 Msg_18FEF500: 8 ECU
+ SG_ AmbientTemperature : 24|16@1+ (0.0312,-273) [-273|1734] "℃" Receiver
+ SG_ AtmosphericPressure : 0|8@1+ (0.5,0) [0|125] "kpa" Receiver
+
+BO_ 2566843904 Msg_18FEEE00: 8 ECU
+ SG_ CoolantTemperature : 0|8@1+ (1,-40) [-40|210] "℃" Receiver
+
+BO_ 2566757283 Msg_18FD9BA3: 8 ECU
+ SG_ UreaConcentration : 8|8@1+ (0.25,0) [0|62.5] "%" Receiver
+
+BO_ 2566805155 Msg_18FE56A3: 8 ECU
+ SG_ UreaTemperature : 8|8@1+ (1,0) [-40|210] "℃" Receiver
+ SG_ UreaLevel : 0|8@1+ (0.4,0) [0|100] "%" Receiver
+ SG_ LinePressure : 48|8@1+ (9.8,-500) [0|1500] "kpa" Receiver
+
+BO_ 2566840064 Msg_18FEDF00: 8 ECU
+ SG_ ExhaustFlow : 40|16@1+ (0.2,0) [0|12851] "kg/h" Receiver
+
+BO_ 2364548096 Msg_0CF02400: 8 ECU
+ SG_ UreaInjectionQuantity : 0|16@1+ (1,0) [0|10000] "0.3g/h" Receiver
+
+CM_ SG_ 2364539904 EngineSpeed "转速; default=0; enabled=true";
+CM_ SG_ 2364539904 EngineTorque "扭矩; default=0; enabled=true";
+CM_ SG_ 2365484270 VehicleSpeed "车速; default=0; enabled=true";
+CM_ SG_ 2566725632 T5 "T5; default=0; enabled=false";
+CM_ SG_ 2499624448 T6 "T6; default=0; enabled=false";
+CM_ SG_ 2499624448 T7 "T7; default=0; enabled=false";
+CM_ SG_ 2565869137 UpstreamNOx "上游 NOx; default=0; enabled=false; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"内部故障\",\"raw\":null,\"byte_overrides\":[[5,3]]}]";
+CM_ SG_ 2565869394 DownstreamNOx "下游 NOx; default=0; enabled=true; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"内部故障\",\"raw\":null,\"byte_overrides\":[[5,3]]}]";
+CM_ SG_ 2566845696 AmbientTemperature "环境温度; default=25; enabled=true";
+CM_ SG_ 2566845696 AtmosphericPressure "大气压力; default=100; enabled=false";
+CM_ SG_ 2566843904 CoolantTemperature "冷却水温; default=25; enabled=true";
+CM_ SG_ 2566757283 UreaConcentration "尿素浓度; default=32.5; enabled=false; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"组件开路\",\"raw\":null,\"byte_overrides\":[[1,254],[4,3]]},{\"name\":\"组件短路\",\"raw\":null,\"byte_overrides\":[[1,254],[4,4]]},{\"name\":\"温度超高限\",\"raw\":null,\"byte_overrides\":[[0,254],[3,3]]},{\"name\":\"温度超低限\",\"raw\":null,\"byte_overrides\":[[0,254],[3,4]]},{\"name\":\"温度不可信\",\"raw\":null,\"byte_overrides\":[[0,254],[1,254],[3,2],[4,2],[5,14]]},{\"name\":\"内部失效\",\"raw\":null,\"byte_overrides\":[[1,251],[3,31],[4,31],[5,12]]}]";
+CM_ SG_ 2566805155 UreaTemperature "尿素温度; default=25; enabled=false; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"超高限\",\"raw\":null,\"byte_overrides\":[[1,254],[5,3]]},{\"name\":\"超低限\",\"raw\":null,\"byte_overrides\":[[1,254],[5,4]]},{\"name\":\"不可信\",\"raw\":null,\"byte_overrides\":[[0,254],[1,254],[3,254],[4,2],[5,2]]}]";
+CM_ SG_ 2566805155 UreaLevel "尿素液位; default=60; enabled=false; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"超高限\",\"raw\":null,\"byte_overrides\":[[0,254],[2,255],[3,254],[4,3]]},{\"name\":\"超低限\",\"raw\":null,\"byte_overrides\":[[0,254],[2,255],[3,254],[4,4]]}]";
+CM_ SG_ 2566805155 LinePressure "管路压力; default=600; enabled=false; states=[{\"name\":\"默认\",\"raw\":null},{\"name\":\"超高限\",\"raw\":null,\"byte_overrides\":[[6,255]]},{\"name\":\"超低限\",\"raw\":null,\"byte_overrides\":[[6,0]]}]";
+CM_ SG_ 2566840064 ExhaustFlow "排气流量; default=0; enabled=true";
+CM_ SG_ 2364548096 UreaInjectionQuantity "尿素喷射量; default=0; enabled=false";
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 2147483647;
+BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BA_ "GenMsgCycleTime" BO_ 2364539904 10;
+BA_ "GenMsgCycleTime" BO_ 2365484270 50;
+BA_ "GenMsgCycleTime" BO_ 2566725632 500;
+BA_ "GenMsgCycleTime" BO_ 2499624448 500;
+BA_ "GenMsgCycleTime" BO_ 2565869137 50;
+BA_ "GenMsgCycleTime" BO_ 2565869394 50;
+BA_ "GenMsgCycleTime" BO_ 2566845696 1000;
+BA_ "GenMsgCycleTime" BO_ 2566843904 1000;
+BA_ "GenMsgCycleTime" BO_ 2566757283 1000;
+BA_ "GenMsgCycleTime" BO_ 2566805155 1000;
+BA_ "GenMsgCycleTime" BO_ 2566840064 250;
+BA_ "GenMsgCycleTime" BO_ 2364548096 1000;

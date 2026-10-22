@@ -5,10 +5,11 @@ from __future__ import annotations
 from PySide6.QtCore import QByteArray, Qt
 from PySide6.QtGui import QAction, QCloseEvent, QGuiApplication
 from PySide6.QtWidgets import (QGroupBox, QLabel, QMainWindow, QMessageBox,
-                               QSplitter, QTabWidget, QVBoxLayout, QWidget)
+                               QTabWidget, QVBoxLayout, QWidget)
 
 from .. import signals, storage
 from ..bus import BACKEND_SIM, BusBackend, BusConfig, create_bus
+from .widgets import HoverSplitter
 from ..frame import CanFrame
 from ..storage import StorageError
 from ..worker import BusWorker
@@ -72,7 +73,7 @@ class MainWindow(QMainWindow):
         self.signal_panel = SignalPanel(signal_defs)
         self.simulate_panel = SimulatePanel()
 
-        self._send_splitter = QSplitter(Qt.Vertical)
+        self._send_splitter = HoverSplitter(Qt.Vertical)
         self._send_splitter.addWidget(self.send_panel)
         self._send_splitter.addWidget(list_group)
         self.send_panel.setMinimumHeight(32)
@@ -95,7 +96,7 @@ class MainWindow(QMainWindow):
         trace_layout = QVBoxLayout(trace_group)
         trace_layout.addWidget(self.trace_panel)
 
-        self._main_splitter = QSplitter(Qt.Vertical)
+        self._main_splitter = HoverSplitter(Qt.Vertical)
         self._main_splitter.addWidget(self.device_panel)
         self._main_splitter.addWidget(self.tabs)
         self._main_splitter.addWidget(trace_group)
@@ -237,6 +238,8 @@ class MainWindow(QMainWindow):
 
     def _set_connected(self, connected: bool) -> None:
         self.measurement_panel.set_connected(connected)
+        self.signal_panel.set_bus_enabled(connected)
+        self.simulate_panel.set_bus_enabled(connected)
         self.send_panel.set_bus_enabled(connected)
         self.list_panel.set_bus_enabled(connected)
         if not connected:
@@ -483,6 +486,7 @@ class MainWindow(QMainWindow):
                 self.trace_panel.set_direction_filter(str(trace.get("direction", "全部")))
             except (TypeError, ValueError):
                 pass
+        self.signal_panel.restore_card_layout(settings.get("signal_card_layout"))
         send_splitter_state = settings.get("send_splitter")
         if isinstance(send_splitter_state, str):
             self._send_splitter.restoreState(QByteArray.fromBase64(send_splitter_state.encode("ascii")))
@@ -516,6 +520,7 @@ class MainWindow(QMainWindow):
                 "direction": self.trace_panel.direction.currentText(),
             },
             "send": {"period_ms": self.send_panel.period_ms.value()},
+            "signal_card_layout": self.signal_panel.card_layout_settings(),
             "list_header": bytes(self.list_panel.table.horizontalHeader().saveState().toBase64()).decode("ascii"),
             "send_splitter": bytes(self._send_splitter.saveState().toBase64()).decode("ascii"),
             "main_splitter": bytes(self._main_splitter.saveState().toBase64()).decode("ascii"),

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .widgets import OperationButton
+
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout,
                                QHeaderView, QLabel, QLineEdit, QPushButton,
@@ -33,10 +35,10 @@ class TracePanel(QWidget):
     # ------------------------------------------------------------------ 界面
 
     def _build(self) -> None:
-        self.pause_button = QPushButton("暂停")
+        self.pause_button = OperationButton("暂停")
         self.pause_button.setCheckable(True)
         self.clear_button = QPushButton("清空")
-        self.save_button = QPushButton("保存日志")
+        self.save_button = QPushButton("保存报文")
 
         self.autoscroll = QCheckBox("自动滚动")
         self.autoscroll.setChecked(True)

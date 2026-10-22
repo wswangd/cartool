@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 import os
 
+from .widgets import OperationButton
+
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog,
                                QHBoxLayout, QLabel, QLineEdit, QMessageBox,
@@ -64,6 +66,9 @@ class CsvTableModel(QAbstractTableModel):
             from PySide6.QtWidgets import QApplication
             palette = QApplication.palette()
             return QBrush(palette.color(QPalette.Active, QPalette.Highlight))
+        if role == Qt.ForegroundRole and index.row() == self._highlight_row:
+            from PySide6.QtGui import QBrush, QColor
+            return QBrush(QColor("#FFFFFF"))
         return None
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -90,6 +95,7 @@ class SimulatePanel(QWidget):
         self._last_dir = str(os.path.expanduser("~"))
         self._playing = False
         self._enabled = True
+        self._bus_enabled = False
         self._row_index = 0
         self._cycle_count = 0
         self._playback_timer = QTimer(self)
@@ -123,7 +129,8 @@ class SimulatePanel(QWidget):
         self.row_period.setSuffix(" ms")
         toolbar.addWidget(self.row_period)
 
-        self.start_button = QPushButton("开始")
+        self.start_button = OperationButton("发送")
+        self.start_button.setEnabled(False)
         self.start_button.setFixedWidth(90)
         toolbar.addWidget(self.start_button)
 
@@ -296,6 +303,8 @@ class SimulatePanel(QWidget):
         if not self._enabled:
             self.message.emit("信号发送正在运行，请先停止信号发送")
             return
+        if not self._bus_enabled:
+            return
         if not self._csv_rows:
             self.message.emit("请先导入数据文件")
             return
@@ -313,7 +322,7 @@ class SimulatePanel(QWidget):
     def _stop(self) -> None:
         self._playing = False
         self._playback_timer.stop()
-        self.start_button.setText("开始")
+        self.start_button.setText("发送")
         self._refresh_controls()
         self.send_mode.setEnabled(True)
         self.row_period.setEnabled(True)
@@ -387,8 +396,12 @@ class SimulatePanel(QWidget):
         self._enabled = enabled
         self._refresh_controls()
 
+    def set_bus_enabled(self, enabled: bool) -> None:
+        self._bus_enabled = enabled
+        self._refresh_controls()
+
     def _refresh_controls(self) -> None:
-        self.start_button.setEnabled(self._playing or self._enabled)
+        self.start_button.setEnabled(self._bus_enabled and (self._playing or self._enabled))
         self.import_button.setEnabled(self._enabled and not self._playing)
         self.import_button.setToolTip(
             "请先停止数据模拟" if self._playing else

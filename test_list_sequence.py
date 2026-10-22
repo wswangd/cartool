@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from app.bus import BusConfig, SimBus
@@ -66,7 +67,8 @@ class ListSequenceTests(unittest.TestCase):
         self.assertEqual(started[0][2:], (10, 50))
         self.assertTrue(panel.start_button.isEnabled())
         self.assertEqual(panel.start_button.text(), '停止')
-        self.assertFalse(panel.table.isEnabled())
+        self.assertTrue(panel.table.isEnabled())
+        self.assertFalse(panel.model.flags(panel.model.index(0, 1)) & Qt.ItemIsEditable)
         panel.sequence_finished()
         self.assertEqual(panel.start_button.text(), '发送')
         self.assertTrue(panel.start_button.isEnabled())

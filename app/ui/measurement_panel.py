@@ -2,15 +2,21 @@
 
 from pathlib import Path
 import math
+import time
+from html import escape
 
-from PySide6.QtCore import QEvent, Qt, QTimer, Signal
-from PySide6.QtWidgets import (QComboBox, QFileDialog, QHBoxLayout,
-                               QLabel, QLineEdit, QPushButton, QScrollArea,
-                               QSpinBox, QSplitter,
+from .widgets import OperationButton
+
+from PySide6.QtCore import QEvent, QRect, Qt, QTimer, Signal
+from PySide6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QGridLayout,
+                               QLabel, QLineEdit, QMenu, QMessageBox, QPushButton, QScrollArea,
+                               QSizePolicy, QSpinBox,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
+from .widgets import HoverSplitter
 from ..frame import RX
 from .measurement_card import ElidedLabel, MeasurementCard
+from .merged_scope import MergedScope
 
 
 class MeasurementPanel(QWidget):
@@ -20,6 +26,8 @@ class MeasurementPanel(QWidget):
         super().__init__(parent)
         self._messages = {}
         self._cards = {}
+        self._merge_groups = {}
+        self._selected_cards = set()
         self._card_order = []
         self._items = {}
         self._visible_keys = set()
@@ -29,14 +37,12 @@ class MeasurementPanel(QWidget):
         self._running = False
         self._connected = False
         self._last_dir = str(Path.home())
+        self._time_range = 300
+        self._cursor_time = None
+        self._scope_clock = time.time()
         self._errors = 0
         self.import_button = QPushButton("导入 DBC")
-        self.encoding_combo = QComboBox()
-        for label, encoding in (("自动编码", None), ("UTF-8", "utf-8-sig"),
-                                ("中文 GB18030", "gb18030"), ("西文 CP1252", "cp1252")):
-            self.encoding_combo.addItem(label, encoding)
-        self.encoding_combo.setToolTip("单位或中文乱码时，选择文件实际编码后重新导入")
-        self.start_button = QPushButton("开始测量")
+        self.start_button = OperationButton("开始测量")
         self.start_button.setEnabled(False)
         self.update_period = QSpinBox()
         self.update_period.setRange(5, 100000)
@@ -46,16 +52,19 @@ class MeasurementPanel(QWidget):
         self.update_period.setMinimumWidth(125)
         self.update_period.setToolTip("控制数值及波形刷新周期，不改变 CAN 报文发送周期")
         self.search = QLineEdit()
+        self.search.setContextMenuPolicy(Qt.NoContextMenu)
         self.search.setPlaceholderText("搜索报文、ID 或信号")
         self.search.setClearButtonEnabled(True)
         self.file_label = ElidedLabel("未导入 DBC")
         self.toolbar = QHBoxLayout()
         self.toolbar.addWidget(self.file_label, 1)
-        for widget in (self.import_button, self.encoding_combo,
+        for widget in (self.import_button,
                        QLabel("更新周期"), self.update_period):
             self.toolbar.addWidget(widget)
         self.toolbar.addWidget(self.start_button)
         self.tree = QTreeWidget()
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._tree_context_menu)
         self.tree.setHeaderLabels(["报文 / 信号"])
         self.tree.setMinimumWidth(0)
         self.selector_panel = QWidget()
@@ -70,7 +79,13 @@ class MeasurementPanel(QWidget):
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setFrameShape(QScrollArea.NoFrame)
         self.scroll.viewport().installEventFilter(self)
+        self.scroll.viewport().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.scroll.viewport().customContextMenuRequested.connect(
+            lambda pos: self._card_context_menu(self.scroll.viewport().mapToGlobal(pos)))
         self.container = QWidget()
+        self.container.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.container.customContextMenuRequested.connect(
+            lambda pos: self._card_context_menu(self.container.mapToGlobal(pos)))
         columns = QHBoxLayout(self.container)
         columns.setContentsMargins(2, 2, 2, 2)
         columns.setSpacing(6)
@@ -91,7 +106,7 @@ class MeasurementPanel(QWidget):
             self._column_widgets.append(column)
             self._columns.append(column_layout)
         self.scroll.setWidget(self.container)
-        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter = HoverSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.selector_panel)
         self.splitter.addWidget(self.scroll)
         self.splitter.setStretchFactor(0, 0)
@@ -131,11 +146,9 @@ class MeasurementPanel(QWidget):
         import cantools
 
         source = Path(path).read_bytes()
-        selected_encoding = self.encoding_combo.currentData()
         western_units = any(marker in source for marker in (b"\xb0C", b"\xb0F", b"\xb5s", b"\xb5A"))
-        encodings = ([selected_encoding] if selected_encoding else
-                     ["utf-8-sig"] + (["cp1252", "gb18030"] if western_units
-                                       else ["gb18030", "cp1252"]))
+        encodings = ["utf-8-sig"] + (["cp1252", "gb18030"] if western_units
+                                     else ["gb18030", "cp1252"])
         text = None
         for encoding in encodings:
             try:
@@ -144,7 +157,7 @@ class MeasurementPanel(QWidget):
             except UnicodeDecodeError:
                 continue
         if text is None:
-            raise ValueError("文件编码不匹配，请切换编码后重新导入")
+            raise ValueError("无法识别文件编码，请将文件转换为 UTF-8 后重新导入")
         database = cantools.database.load_string(text, database_format="dbc", strict=False)
         messages = {}
         warnings = []
@@ -185,6 +198,8 @@ class MeasurementPanel(QWidget):
             card.hide()
             card.deleteLater()
         self._cards.clear()
+        self._selected_cards.clear()
+        self._merge_groups.clear()
         self._card_order.clear()
         self._items.clear()
         self._visible_keys.clear()
@@ -202,7 +217,21 @@ class MeasurementPanel(QWidget):
                 card = MeasurementCard(signal.name, signal.unit or "", description, self.container)
                 self._cards[key, signal.name] = card
                 self._card_order.append((key, signal.name))
-                card.swap_requested.connect(self._swap_cards)
+                card._time_max = self._time_range
+                card._shared_time = self._scope_clock
+                card.range_requested.connect(self._set_time_range)
+                card.remove_requested.connect(
+                    lambda signal_key=(key,signal.name): self._remove_measurement(signal_key))
+                card.cursor_moved.connect(self._set_linked_cursor)
+                card.selection_requested.connect(self._select_card)
+                card.auto_size_requested.connect(lambda c=card: self._auto_size_selected(c))
+                card.size_requested.connect(self._resize_selected_cards)
+                card.merge_selection_requested.connect(self._merge_selected_cards)
+                card.merge_requested.connect(self._confirm_merge)
+                card.move_out_requested.connect(lambda member, owner=(key,signal.name): self._move_out_signal(owner,member))
+                card.unmerge_requested.connect(lambda signal_key=(key,signal.name): self._unmerge(signal_key))
+                card.insert_requested.connect(self._insert_cards)
+                card.resized.connect(self._relayout_cards)
                 self._items[key, signal.name] = item
                 item.setData(0, Qt.UserRole, (key, signal.name))
             parent.setExpanded(True)
@@ -233,7 +262,6 @@ class MeasurementPanel(QWidget):
         self._pending.clear()
         self.start_button.setText("停止测量" if running else "开始测量")
         self.import_button.setEnabled(not running)
-        self.encoding_combo.setEnabled(not running)
         if running:
             for card in self._cards.values():
                 card.clear()
@@ -249,28 +277,342 @@ class MeasurementPanel(QWidget):
         if self._running:
             self.status.setText(f"测量中：每 {period}ms 刷新接收报文的最新值及波形。")
 
+    def _tree_context_menu(self, position) -> None:
+        menu = QMenu(self.tree)
+        menu.addAction("全部收起", self.tree.collapseAll)
+        menu.addAction("全部展开", self.tree.expandAll)
+        menu.addSeparator()
+        menu.addAction("全选", lambda: self._check_all_signals(True))
+        menu.addAction("全不选", lambda: self._check_all_signals(False))
+        menu.exec(self.tree.viewport().mapToGlobal(position))
+
+    def _card_context_menu(self, position) -> None:
+        child = self.container.childAt(self.container.mapFromGlobal(position))
+        if child is not None and any(card is child or card.isAncestorOf(child)
+                                     for card in self._cards.values()):
+            return
+        menu = QMenu(self)
+        menu.addAction("恢复默认缩放", self._auto_size_cards)
+        menu.addAction("收起波形图", self._collapse_waveforms)
+        menu.exec(position)
+
+    def _auto_size_cards(self) -> None:
+        for card in self._cards.values():
+            self._auto_size_card(card,relayout=False)
+        self._relayout_cards()
+
+    def _resize_selected_cards(self, source, size):
+        from PySide6.QtCore import QSize
+        selected = [self._cards[key] for key in self._selected_cards
+                    if key in self._cards and not self._cards[key].isHidden()]
+        if source not in selected or len(selected)<2:
+            return
+        sx,sy = size.width()/max(1,source.width()),size.height()/max(1,source.height())
+        maximum = max(220,self.scroll.viewport().width()-12)
+        for card in selected:
+            if card is source:
+                continue
+            minimum_height = 160 if card.scope else 36
+            card._custom_sizes[card.scope is not None] = QSize(
+                max(220,min(maximum,round(card.width()*sx))),
+                max(minimum_height,min(2000,round(card.height()*sy))))
+
+    def _auto_size_selected(self, source):
+        selected = [self._cards[key] for key in self._selected_cards
+                    if key in self._cards and not self._cards[key].isHidden()]
+        targets = selected if source in selected else [source]
+        for card in targets:
+            self._auto_size_card(card, relayout=False)
+        self._relayout_cards()
+
+    def _auto_size_card(self, card, relayout=True) -> None:
+        card._custom_sizes.clear()
+        card._text_scale = 1.0
+        if card._merged_plot is not None:
+            from PySide6.QtCore import QSize
+            lanes = len({member.unit for member in card._merged_plot.cards})
+            card._custom_sizes[True] = QSize(min(350,max(220,self.scroll.viewport().width()-12)),100+160*(1 if lanes == 2 else lanes))
+        if relayout:
+            self._relayout_cards()
+
+    def _collapse_waveforms(self) -> None:
+        for card in self._cards.values():
+            card.expand_button.setChecked(False)
+        self._relayout_cards()
+
+    def _check_all_signals(self, checked: bool) -> None:
+        self.tree.blockSignals(True)
+        try:
+            state = Qt.Checked if checked else Qt.Unchecked
+            for item in self._items.values():
+                item.setCheckState(0, state)
+        finally:
+            self.tree.blockSignals(False)
+        self._filter()
+
     def eventFilter(self, watched, event) -> bool:
         if watched is self.scroll.viewport() and event.type() == QEvent.Resize:
             QTimer.singleShot(0, self._layout_cards)
         return super().eventFilter(watched, event)
 
+    def _relayout_cards(self):
+        self._layout_keys = None
+        self._layout_cards()
+
     def _layout_cards(self) -> None:
-        visible = tuple(key for key in self._card_order if key in self._visible_keys)
-        count = 2 if self.scroll.viewport().width() >= 700 else 1
-        state = count, visible
-        if state == self._layout_keys:
-            return
-        self._layout_keys = state
-        for card in self._cards.values():
+        members = {key for owner,group in self._merge_groups.items() for key in group if key != owner}
+        visible = tuple(key for key in self._card_order if key not in members and
+                        (key in self._visible_keys or any(k in self._visible_keys for k in self._merge_groups.get(key,[]))))
+        for key in members:
+            self._cards[key].hide()
+        count = max(1, (self.scroll.viewport().width()-7)//355)
+        self._layout_keys = count, visible
+        self.container.layout().setEnabled(False)
+        for widget in self._column_widgets:
+            widget.hide()
+        width = max(220,self.scroll.viewport().width()-12)
+        default_w = min(350,width)
+        placed = []
+        self.empty_label.setVisible(not visible)
+        self.empty_label.setGeometry(0,0,width,80)
+        for key in visible:
+            card = self._cards[key]
             for column in self._columns:
                 column.removeWidget(card)
-        self.empty_label.setVisible(not visible)
-        self._column_widgets[0].setVisible(bool(visible))
-        self._column_widgets[1].setVisible(bool(visible) and count == 2)
-        for index, key in enumerate(visible):
-            column = self._columns[index % count]
-            column.insertWidget(column.count() - 1, self._cards[key])
-            self._cards[key].show()
+            if card.parentWidget() is not self.container:
+                card.setParent(self.container)
+            size = card._custom_sizes.get(card.scope is not None)
+            w = min(width,size.width()) if size else default_w
+            h = size.height() if size else (160 if card.scope else 36)
+            if card._merged_plot is not None and not card.expand_button.isChecked():
+                h = 40+card._merged_legend.sizeHint().height()
+            xs = sorted({0} | {rect.right()+6 for rect in placed})
+            ys = sorted({0} | {rect.bottom()+6 for rect in placed})
+            target = None
+            for y in ys:
+                for x in xs:
+                    if x+w > width:
+                        continue
+                    candidate = QRect(x,y,w,h)
+                    if not any(candidate.intersects(rect.adjusted(-5,-5,5,5)) for rect in placed):
+                        target = candidate
+                        break
+                if target is not None:
+                    break
+            if target is None:
+                target = QRect(0,max((rect.bottom()+6 for rect in placed),default=0),w,h)
+            card.setFixedSize(w,h)
+            card.move(target.topLeft())
+            card.show()
+            card._layout.activate()
+            if card._merged_plot is None and card.scope is not None:
+                card.scope.setFixedHeight(max(120,h-card.header_widget.sizeHint().height()-18))
+            placed.append(target)
+        self.container.setMinimumHeight(max(80,max((rect.bottom()+1 for rect in placed),default=0)))
+        self._refresh_card_selection()
+
+    def _remove_measurement(self, key):
+        keys = list(self._merge_groups.get(key,[key]))
+        self.tree.blockSignals(True)
+        for signal_key in keys:
+            self._items[signal_key].setCheckState(0,Qt.Unchecked)
+        self.tree.blockSignals(False)
+        self._filter()
+
+    def _refresh_group_legend(self, card):
+        for member, label in card._merged_values:
+            label.setText(member.value_label.text())
+        card._apply_text_style()
+
+    def _select_card(self, card, additive):
+        lookup = {id(c):key for key,c in self._cards.items()}
+        key = lookup.get(id(card))
+        if key is None:
+            return
+        if additive:
+            if key in self._selected_cards:
+                self._selected_cards.remove(key)
+            else:
+                self._selected_cards.add(key)
+        else:
+            self._selected_cards = {key}
+        self._refresh_card_selection()
+
+    def _refresh_card_selection(self):
+        self._selected_cards = {key for key in self._selected_cards
+                                if key in self._cards and not self._cards[key].isHidden()}
+        for key,card in self._cards.items():
+            card._multi_selected = key in self._selected_cards
+            card._can_merge_selection = card._multi_selected and len(self._selected_cards)>1
+            card._refresh_selection_border(card._multi_selected)
+
+    def _merge_selected_cards(self):
+        keys = [key for key in self._card_order if key in self._selected_cards and not self._cards[key].isHidden()]
+        if len(keys)<2:
+            return
+        answer = QMessageBox.question(self,"合并信号","是否合并显示？",QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+        if answer != QMessageBox.Yes:
+            return
+        target = keys[0]
+        for key in keys[1:]:
+            self._merge_signals(key,target)
+        self._selected_cards = {target}
+        self._refresh_card_selection()
+
+    def _confirm_merge(self, source, target):
+        lookup = {id(card):key for key,card in self._cards.items()}
+        source_key,target_key = lookup.get(id(source)),lookup.get(id(target))
+        if source_key is None or target_key is None or source is target:
+            return
+        answer = QMessageBox.question(self,"合并信号","是否合并显示？",QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+        if answer == QMessageBox.Yes:
+            self._merge_signals(source_key,target_key)
+
+    def _merge_signals(self, source_key, target_key):
+        keys = list(dict.fromkeys(self._merge_groups.get(target_key,[target_key])+self._merge_groups.get(source_key,[source_key])))
+        for owner in (source_key,target_key):
+            if owner in self._merge_groups:
+                self._unmerge(owner,relayout=False)
+        for key in keys:
+            self._cards[key].expand_button.setChecked(True)
+        target = self._cards[target_key]
+        target._premerge_sizes = dict(target._custom_sizes)
+        self._merge_groups[target_key] = keys
+        target._merged_plot = MergedScope([self._cards[key] for key in keys],target)
+        target._merged_plot._view_time = self._scope_clock
+        target._merged_plot.set_window_seconds(self._time_range)
+        target._merged_plot.time_range_changed.connect(self._set_time_range)
+        target._merged_plot.cursor_moved.connect(self._set_linked_cursor)
+        target._merged_plot.set_linked_cursor(self._cursor_time)
+        target._merged_legend = QWidget(target)
+        target._merged_legend.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        rows = QVBoxLayout(target._merged_legend)
+        rows.setContentsMargins(0,0,0,0)
+        rows.setSpacing(4)
+        target._merged_values = []
+        target._wave_checks = []
+        primary_check = QCheckBox()
+        primary_check.setChecked(True)
+        primary_check.setToolTip("显示/隐藏此信号波形")
+        primary_check.toggled.connect(lambda visible,c=target: self._set_group_wave_visible(c,c,visible))
+        target._header.insertWidget(0,primary_check)
+        target._primary_wave_check = primary_check
+        target._wave_checks.append(primary_check)
+        for row,key in enumerate(keys[1:]):
+            member = self._cards[key]
+            color = MergedScope.COLORS[(row+1)%len(MergedScope.COLORS)]
+            name = ElidedLabel(member.name)
+            name.setMinimumWidth(40)
+            name.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
+            name.setToolTip(member.name)
+            unit = QLabel(member.unit)
+            value = QLabel(member.value_label.text())
+            value.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            value.setMinimumWidth(40)
+            unit.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Preferred)
+            for label in (name,unit,value):
+                label.setTextFormat(Qt.PlainText)
+                label.setStyleSheet(f"color:{color}; font-size:9pt;")
+            unit.setStyleSheet("color:#6B7280; font-size:9pt;")
+            for label in (name,value):
+                font = label.font()
+                font.setBold(True)
+                label.setFont(font)
+                label.setStyleSheet(f"color:{color}; font-size:9pt; font-weight:bold;")
+            data_row = QWidget()
+            data_row.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+            row_layout = QHBoxLayout(data_row)
+            row_layout.setContentsMargins(0,0,0,0)
+            row_layout.setSpacing(6)
+            identity = QHBoxLayout()
+            identity.setSpacing(6)
+            identity.addWidget(name)
+            identity.addWidget(unit)
+            identity.addStretch(1)
+            check = QCheckBox()
+            check.setChecked(True)
+            check.setToolTip("显示/隐藏此信号波形")
+            check.toggled.connect(lambda visible,c=target,m=member: self._set_group_wave_visible(c,m,visible))
+            row_layout.addWidget(check)
+            target._wave_checks.append(check)
+            row_layout.addLayout(identity,1)
+            row_layout.addWidget(value)
+            spacer = QWidget()
+            spacer.setFixedSize(target.expand_button.sizeHint())
+            row_layout.addWidget(spacer)
+            rows.addWidget(data_row)
+            target._merged_values.append((member,value))
+        target._layout.addWidget(target._merged_legend)
+        target._layout.addWidget(target._merged_plot)
+        target.scope.hide()
+        target.name_label.full_text = target.name
+        target.name_label.update()
+        self._refresh_group_legend(target)
+        from PySide6.QtCore import QSize
+        target._custom_sizes[True] = QSize(max(500,target.width()),100+160*(1 if len({self._cards[key].unit for key in keys}) == 2 else len({self._cards[key].unit for key in keys})))
+        self._layout_cards()
+
+    def _set_group_wave_visible(self, owner, member, visible):
+        plot = owner._merged_plot
+        if plot is None:
+            return
+        if visible:
+            plot.hidden_cards.discard(id(member))
+        else:
+            plot.hidden_cards.add(id(member))
+        plot.update()
+
+    def _move_out_signal(self, owner, member):
+        lookup = {id(card):key for key,card in self._cards.items()}
+        removed = lookup.get(id(member))
+        keys = list(self._merge_groups.get(owner,[]))
+        if removed not in keys:
+            return
+        remaining = [key for key in keys if key != removed]
+        self._unmerge(owner,relayout=False)
+        if len(remaining)>1:
+            for key in remaining[1:]:
+                self._merge_signals(key,remaining[0])
+        self._filter()
+
+    def _unmerge(self, owner, relayout=True):
+        keys = self._merge_groups.pop(owner,None)
+        if keys is None:
+            return
+        card = self._cards[owner]
+        for widget in (card._merged_plot,card._merged_legend):
+            card._layout.removeWidget(widget)
+            widget.hide()
+            widget.deleteLater()
+        card._header.removeWidget(card._primary_wave_check)
+        card._primary_wave_check.hide()
+        card._primary_wave_check.deleteLater()
+        card._merged_plot = None
+        card._custom_sizes = dict(getattr(card,"_premerge_sizes",{}))
+        card._apply_text_style()
+        card.name_label.setMinimumWidth(40)
+        card.name_label.setMaximumWidth(16777215)
+        card.name_label.full_text = card.name
+        card.name_label.update()
+        if card.scope is not None:
+            card.scope.show()
+        if relayout:
+            self._filter()
+
+    def _insert_cards(self, source, target, before):
+        keys = {id(card): key for key,card in self._cards.items()}
+        source_key,target_key = keys.get(id(source)),keys.get(id(target))
+        if source_key is None or target_key is None or source is target:
+            return
+        visible = [key for key in self._card_order if key in self._visible_keys]
+        if source_key not in visible or target_key not in visible:
+            return
+        slots = [i for i,key in enumerate(self._card_order) if key in visible]
+        visible.remove(source_key)
+        visible.insert(visible.index(target_key)+(0 if before else 1),source_key)
+        for i,key in zip(slots,visible):
+            self._card_order[i] = key
+        self._layout_cards()
 
     def _swap_cards(self, source, target) -> None:
         keys = {id(card): key for key, card in self._cards.items()}
@@ -308,7 +650,39 @@ class MeasurementPanel(QWidget):
                     and key in self._selected_messages):
                 self._pending[key] = record
 
+    def _set_linked_cursor(self, timestamp):
+        self._cursor_time = timestamp
+        for card in self._cards.values():
+            card._linked_cursor = timestamp
+            if card.scope is not None:
+                card.scope.set_linked_cursor(timestamp)
+            if card._merged_plot is not None:
+                card._merged_plot.set_linked_cursor(timestamp)
+
+    def _set_time_range(self, seconds):
+        self._time_range = seconds
+        for card in self._cards.values():
+            card._time_max = seconds
+            if card.scope is not None:
+                card.scope.set_window_seconds(seconds)
+            if card._merged_plot is not None:
+                card._merged_plot.set_window_seconds(seconds)
+
     def _flush(self) -> None:
+        group_owners = {key:self._cards[owner] for owner,keys in self._merge_groups.items() for key in keys}
+        self._scope_clock = time.time()
+        for card in self._cards.values():
+            card._shared_time = self._scope_clock
+            if card.scope is not None:
+                card.scope._view_time = self._scope_clock
+                if not card.scope.isHidden() and not card.isHidden():
+                    card.scope.update()
+            if card._merged_plot is not None:
+                card._merged_plot._view_time = self._scope_clock
+                card._merged_plot.WINDOW_SECONDS = self._time_range
+                if card.expand_button.isChecked() and not card.isHidden():
+                    card._merged_plot.update()
+                self._refresh_group_legend(card)
         from cantools.database.errors import DecodeError
 
         pending, self._pending = self._pending, {}
@@ -331,10 +705,25 @@ class MeasurementPanel(QWidget):
                 text = format(value, ".10g") if valid else "—"
                 card.set_value(text, valid)
                 scope = card.scope
-                if valid and scope is not None and not card.isHidden():
+                owner = group_owners.get((key,signal.name))
+                sampling = (owner.expand_button.isChecked() and not owner.isHidden()) if owner is not None else not card.isHidden()
+                if valid and scope is not None and sampling:
                     scope.append(record.wall_time, value)
 
+        for card in self._cards.values():
+            if card._merged_plot is not None:
+                self._refresh_group_legend(card)
+
     def _filter(self, *args) -> None:
+        for owner,group in list(self._merge_groups.items()):
+            if any(self._items[key].checkState(0) != Qt.Checked for key in group):
+                self._unmerge(owner, relayout=False)
+        for key,card in self._cards.items():
+            if self._items[key].checkState(0) != Qt.Checked and (card.scope is not None or card._custom_sizes):
+                card.expand_button.setChecked(False)
+                card._custom_sizes.clear()
+                card._text_scale = 1.0
+                card.clear()
         query = self.search.text().strip().casefold()
         self._visible_keys.clear()
         self._selected_messages = {key for (key, name), item in self._items.items()

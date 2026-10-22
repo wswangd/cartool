@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEvent, Qt, QTimer, Signal
-from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox,
-                               QGridLayout, QHBoxLayout, QLabel,
-                               QMessageBox, QPushButton, QScrollArea,
-                               QSlider, QVBoxLayout, QWidget, QLineEdit, QFrame)
+from .widgets import OperationButton
+
+from PySide6.QtCore import QEvent, QPoint, QRect, Qt, QTimer, Signal
+from PySide6.QtGui import QBrush, QColor, QPalette
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
+                               QGridLayout, QHBoxLayout, QLabel, QStyle, QStyleOptionButton, QStylePainter,
+                               QMenu, QMessageBox, QPushButton, QScrollArea,
+                               QSizePolicy, QSlider, QVBoxLayout, QWidget, QLineEdit, QFrame)
 
 from .. import signals
 from ..frame import CanFrame
 from ..signals import SignalDef
+from .signal_card import SignalCard
 from .mapping_dialog import MappingDialog, make_decimal_spin
 
 CARD_WIDTH = 180
@@ -87,6 +90,58 @@ class ValueComboBox(QComboBox):
         """禁用鼠标滚轮，防止误触修改。"""
         event.ignore()
 
+class SignalCheckBox(QCheckBox):
+    """仅单独绘制名称颜色，勾选指示器使用系统调色板。"""
+
+    name_color = None
+
+    def __init__(self, text, parent=None):
+        super().__init__(text, parent)
+        self._name_drag_start = None
+        self.drag_card = None
+        self.setMouseTracking(True)
+
+    def _over_indicator(self, position):
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        return self.style().subElementRect(QStyle.SE_CheckBoxIndicator, option, self).adjusted(-3, -3, 3, 3).contains(position)
+
+    def mousePressEvent(self, event):
+        self._name_drag_start = None
+        if event.button() == Qt.LeftButton and not self._over_indicator(event.position().toPoint()):
+            self._name_drag_start = event.position().toPoint()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        point = event.position().toPoint()
+        self.setCursor(Qt.ArrowCursor if self._over_indicator(point) else Qt.OpenHandCursor)
+        if (self._name_drag_start is not None and event.buttons() & Qt.LeftButton
+                and (point - self._name_drag_start).manhattanLength() >= QApplication.startDragDistance()
+                and self.drag_card is not None):
+            self._name_drag_start = None
+            self.setDown(False)
+            self.drag_card.start_drag(self.mapTo(self.drag_card, point))
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._name_drag_start = None
+        super().mouseReleaseEvent(event)
+
+    def paintEvent(self, event) -> None:
+        painter = QStylePainter(self)
+        option = QStyleOptionButton()
+        self.initStyleOption(option)
+        indicator = QStyleOptionButton(option)
+        indicator.rect = self.style().subElementRect(QStyle.SE_CheckBoxIndicator, option, self)
+        painter.drawPrimitive(QStyle.PE_IndicatorCheckBox, indicator)
+        if self.name_color is not None:
+            option.palette.setColor(QPalette.WindowText, QColor(self.name_color))
+        text_rect = self.style().subElementRect(QStyle.SE_CheckBoxContents, option, self)
+        self.style().drawItemText(painter, text_rect, Qt.AlignLeft | Qt.AlignVCenter | Qt.TextShowMnemonic,
+                                  option.palette, self.isEnabled(), option.text, QPalette.WindowText)
+
+
 class _Column:
     """一路信号的滑杆 + 启用 + 单位 + 编辑器控件集合。"""
 
@@ -103,15 +158,15 @@ class _Column:
                             _decimal_places(sig.maximum),
                             _decimal_places(sig.default), 4)
 
-        self.widget = QFrame()
+        self.widget = SignalCard()
         self.widget.setObjectName("signalCard")
         self.widget.setMinimumWidth(CARD_WIDTH)
         self.widget.setStyleSheet(
             "QFrame#signalCard { background-color: #FFFFFF; border: 1px solid #D8DDE3; border-radius: 8px; }"
             "QFrame#signalCard[active=\"false\"] { background-color: #F3F4F6; border-color: #E5E7EB; }")
         layout = QVBoxLayout(self.widget)
-        layout.setContentsMargins(6, 6, 6, 6)
-        layout.setSpacing(3)
+        layout.setContentsMargins(8, 4, 8, 6)
+        layout.setSpacing(4)
 
         # 滑杆范围对齐到 factor 网格：最小值向上取整、最大值向下取整，
         # 确保每个采样点都精确落在刻度上，无截断
@@ -134,23 +189,31 @@ class _Column:
         self.slider.setTickPosition(QSlider.NoTicks)
         self.slider.setTickInterval(tick_interval)
 
-        self.check = QCheckBox(sig.name)
+        self.check = SignalCheckBox(sig.name)
+        self.check.drag_card = self.widget
         name_font = self.check.font()
         name_font.setBold(True)
         self.check.setFont(name_font)
         self.check.setChecked(sig.enabled)
 
+        self._value_font_size = 24
         self.value_label = QLabel()
         self.value_label.setAlignment(Qt.AlignCenter)
         self.value_label.setStyleSheet("color: #000000; font-size: 24px; font-weight: 700;")
         self.value_label.setMinimumWidth(72)
-        header = QHBoxLayout()
-        header.addWidget(self.check, 1)
+        header_widget = QWidget()
+        header_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        header = QHBoxLayout(header_widget)
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(6)
+        header.addWidget(self.check)
+        header.addStretch(1)
         unit_label = QLabel(sig.unit)
         unit_label.setStyleSheet("color: #6B7280;")
         header.addWidget(unit_label)
-        layout.addLayout(header)
-        layout.addWidget(self.value_label)
+        layout.addWidget(header_widget)
+        self.value_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(self.value_label, 1)
 
 
         self.spin = make_decimal_spin(sig.default, sig.minimum, sig.maximum)
@@ -173,13 +236,27 @@ class _Column:
             self.combo.lineEdit().editingFinished.connect(self._on_combo_value_edited)
             layout.addWidget(self.combo)
             self._refresh_combo_display()
-        layout.addWidget(self.slider)
+        slider_group = QWidget()
+        slider_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        slider_layout = QVBoxLayout(slider_group)
+        slider_layout.setContentsMargins(0, 0, 0, 0)
+        slider_layout.setSpacing(0)
+        slider_layout.addWidget(self.slider)
         bounds = QHBoxLayout()
+        bounds.setContentsMargins(0, 0, 0, 0)
         bounds.addWidget(QLabel(f"{sig.minimum:g}"))
         bounds.addStretch(1)
         bounds.addWidget(QLabel(f"{sig.maximum:g}"))
-        layout.addLayout(bounds)
+        slider_layout.addLayout(bounds)
+        layout.addWidget(slider_group)
         self._refresh_value_display()
+        self.widget.base_min_size = self.widget.minimumSizeHint()
+
+    def set_display_scale(self, scale: float) -> None:
+        font_size = max(18, min(96, round(24 * scale)))
+        if self._value_font_size != font_size:
+            self._value_font_size = font_size
+            self._refresh_value_display()
 
     def phys_value(self) -> float:
         """当前物理值（精度与分辨率一致）。"""
@@ -252,7 +329,7 @@ class _Column:
         active = self.check.isChecked()
         color = "#9CA3AF" if not active else "#C62828" if abnormal else "#000000"
         self.value_label.setStyleSheet(
-            f"color: {color}; font-size: 24px; font-weight: 700;")
+            f"color: {color}; font-size: {self._value_font_size}px; font-weight: 700;")
         if self.combo is not None:
             raw = self.sig.states[self._state_idx].raw
             if raw is not None:
@@ -260,7 +337,9 @@ class _Column:
         text = f"{value:.{self.decimals}f}".rstrip("0").rstrip(".")
         self.value_label.setText(text if text != "-0" else "0")
         self.widget.setProperty("active", self.check.isChecked())
-        self.check.setStyleSheet("" if self.check.isChecked() else "color: #6B7280;")
+        name_color = "#C62828" if abnormal else ("#000000" if active else "#6B7280")
+        self.check.name_color = name_color
+        self.check.update()
         editable = active and (self.combo is None or
                                (self._state_idx == 0 and self.sig.states[0].raw is None))
         self.spin.setEnabled(editable)
@@ -286,7 +365,12 @@ class SignalPanel(QWidget):
         self._defs = defs
         self._cycles: dict[int, int] = signals.load_cycles()
         self._columns: list[_Column] = []
+        self._card_order = []
+        self._card_sizes = {}
+        self._auto_size = False
         self._running = False
+        self._bus_enabled = False
+        self._external_locked = False
         self._emit_timer = QTimer(self)
         self._emit_timer.setSingleShot(True)
         self._emit_timer.timeout.connect(self._emit_values)
@@ -299,7 +383,8 @@ class SignalPanel(QWidget):
         top = QHBoxLayout()
         self.search_edit = QLineEdit()
         self.search_edit.setPlaceholderText("搜索信号名称或单位")
-        self.search_edit.setMaximumWidth(260)
+        self.search_edit.setMinimumWidth(300)
+        self.search_edit.setMaximumWidth(420)
         top.addWidget(self.search_edit)
         self.enabled_only = QCheckBox("仅显示启用")
         top.addWidget(self.enabled_only)
@@ -308,7 +393,8 @@ class SignalPanel(QWidget):
         self.mapping_button = QPushButton("信号配置")
         self.mapping_button.setFixedWidth(90)
         top.addWidget(self.mapping_button)
-        self.start_button = QPushButton("开始")
+        self.start_button = OperationButton("开始")
+        self.start_button.setEnabled(False)
         self.start_button.setFixedWidth(90)
         top.addWidget(self.start_button)
 
@@ -333,8 +419,21 @@ class SignalPanel(QWidget):
             old.deleteLater()
         container = QWidget()
         container.setObjectName("signalCardsContainer")
+        container.installEventFilter(self)
+        container.setAcceptDrops(True)
+        self.scroll.viewport().setAcceptDrops(True)
+        self._insert_marker = QFrame(container)
+        self._insert_marker.setStyleSheet("background: #B8DFFF; border: 1px solid #86BFF0; border-radius: 2px;")
+        self._insert_marker.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._insert_marker.hide()
+        self._insert_target = None
+        self._drag_position = None
+        if not hasattr(self, '_drag_scroll_timer'):
+            self._drag_scroll_timer = QTimer(self)
+            self._drag_scroll_timer.setInterval(40)
+            self._drag_scroll_timer.timeout.connect(self._drag_scroll)
         container.setStyleSheet("QWidget#signalCardsContainer { background-color: #ECEFF1; }")
-        grid = QGridLayout(container)
+        grid = QGridLayout()
         self._card_grid = grid
         grid.setContentsMargins(2, 2, 2, 2)
         grid.setSpacing(CARD_SPACING)
@@ -345,6 +444,8 @@ class SignalPanel(QWidget):
             column = _Column(sig)
             self._columns.append(column)
             column.widget.setParent(container)
+            column.widget.panel = self
+            column.widget.signal_name = sig.name
             column.slider.valueChanged.connect(lambda v, c=column: self._on_slider(c, v))
             column.check.toggled.connect(
                 lambda v, idx=index: self._on_check_toggled(idx, v))
@@ -358,7 +459,61 @@ class SignalPanel(QWidget):
         self.scroll.setWidget(container)
         self._layout_cards()
 
+    def _set_all_checked(self, checked: bool) -> None:
+        for column in self._columns:
+            column.check.blockSignals(True)
+            column.check.setChecked(checked)
+            column.check.blockSignals(False)
+            column.sig.enabled = checked
+            column._refresh_combo_display()
+        self._layout_cards()
+        self._emit_values()
+
+    def _show_selection_menu(self, position) -> None:
+        menu = QMenu(self)
+        menu.addAction("全选", lambda: self._set_all_checked(True))
+        menu.addAction("全不选", lambda: self._set_all_checked(False))
+        menu.addSeparator()
+        menu.addAction("恢复默认缩放", self._auto_adjust_cards)
+        menu.exec(position)
+
+    def contextMenuEvent(self, event) -> None:
+        child = self.childAt(event.pos())
+        if child is not None and any(c.widget is child or c.widget.isAncestorOf(child)
+                                     for c in self._columns):
+            event.ignore()
+            return
+        self._show_selection_menu(event.globalPos())
+        event.accept()
+
     def eventFilter(self, watched, event) -> bool:
+        if event.type() in (QEvent.DragEnter, QEvent.DragMove, QEvent.Drop):
+            source = event.source()
+            if isinstance(source, SignalCard) and source.panel is self and event.mimeData().hasFormat(SignalCard.MIME):
+                event.setDropAction(Qt.MoveAction)
+                event.accept()
+                self._drag_position = watched.mapToGlobal(event.position().toPoint())
+                self._update_insert_marker(self.scroll.widget().mapFromGlobal(self._drag_position))
+                if event.type() == QEvent.Drop:
+                    if self._insert_target:
+                        self._move_card(source.signal_name, *self._insert_target)
+                    self._insert_marker.hide()
+                    self._drag_position = None
+                    self._drag_scroll_timer.stop()
+                else:
+                    self._drag_scroll_timer.start()
+                return True
+        if event.type() == QEvent.DragLeave:
+            self._insert_marker.hide()
+            self._drag_position = None
+            self._drag_scroll_timer.stop()
+        if event.type() == QEvent.ContextMenu and (watched is self.scroll.viewport() or
+                                                   watched is self.scroll.widget()):
+            child = watched.childAt(event.pos())
+            if child is None or not any(c.widget is child or c.widget.isAncestorOf(child)
+                                        for c in self._columns):
+                self._show_selection_menu(event.globalPos())
+                return True
         if watched is self.scroll.viewport() and event.type() == QEvent.Resize:
             QTimer.singleShot(0, self._layout_cards)
         return super().eventFilter(watched, event)
@@ -374,21 +529,122 @@ class SignalPanel(QWidget):
             grid.setColumnMinimumWidth(column_index, 0)
         query = self.search_edit.text().strip().casefold()
         visible = []
-        for column in self._columns:
+        for column in self._ordered_columns():
             matched = (not query or query in f"{column.sig.name} {column.sig.unit}".casefold())
             matched = matched and (not self.enabled_only.isChecked() or column.check.isChecked())
             column.widget.setVisible(matched)
             if matched:
                 visible.append(column)
         width = max(1, self.scroll.viewport().width() - 4)
-        card_width = max([CARD_WIDTH] + [column.widget.minimumSizeHint().width()
-                                        for column in visible])
-        count = max(1, min(len(visible),
-                           (width + CARD_SPACING) // (card_width + CARD_SPACING)))
-        for index, column in enumerate(visible):
-            grid.addWidget(column.widget, index // count, index % count)
-        for column_index in range(count):
-            grid.setColumnStretch(column_index, 1)
+        minimum_width = max([CARD_WIDTH] + [c.widget.base_min_size.width() for c in visible])
+        minimum_height = max([1] + [c.widget.base_min_size.height() for c in visible])
+        count = max(1, min(len(visible), (width + CARD_SPACING) // (minimum_width + CARD_SPACING)))
+        height = minimum_height
+        if self._auto_size and visible:
+            available_height = max(1, self.scroll.viewport().height() - 4)
+            choices = []
+            for columns in range(1, count + 1):
+                rows = math.ceil(len(visible) / columns)
+                h = (available_height - CARD_SPACING * (rows - 1)) // rows
+                if h >= minimum_height:
+                    w = (width - CARD_SPACING * (columns - 1)) // columns
+                    choices.append((min(w / minimum_width, h / minimum_height), columns, h))
+            if choices:
+                _, count, height = max(choices)
+        default_width = max(minimum_width, (width - CARD_SPACING * (count - 1)) // count)
+        placed = []
+        for column in visible:
+            size = self._card_sizes.get(column.sig.name, [default_width, height])
+            w = min(width, max(column.widget.base_min_size.width(), size[0]))
+            h = max(column.widget.base_min_size.height(), size[1])
+            # 从上到下、从左到右寻找可容纳的位置，不再等待整行最高卡片。
+            xs = sorted({2} | {r.right() + 1 + CARD_SPACING for r in placed})
+            ys = sorted({2} | {r.bottom() + 1 + CARD_SPACING for r in placed})
+            target = None
+            for y in ys:
+                for x in xs:
+                    if x + w > width + 2:
+                        continue
+                    candidate = QRect(x, y, w, h)
+                    if not any(candidate.intersects(r.adjusted(-CARD_SPACING, -CARD_SPACING,
+                                                               CARD_SPACING, CARD_SPACING)) for r in placed):
+                        target = candidate
+                        break
+                if target is not None:
+                    break
+            if target is None:
+                target = QRect(2, max((r.bottom() + 1 + CARD_SPACING for r in placed), default=2), w, h)
+            column.set_display_scale(min(w / max(CARD_WIDTH, column.widget.base_min_size.width()),
+                                         h / column.widget.base_min_size.height()))
+            column.widget.setGeometry(target)
+            placed.append(target)
+        self.scroll.widget().setMinimumHeight(max((r.bottom() + 3 for r in placed), default=4))
+
+    def _auto_adjust_cards(self) -> None:
+        self._card_sizes.clear()
+        self._auto_size = True
+        self._layout_cards()
+
+    def _resize_card(self, name, size) -> None:
+        self._card_sizes[name] = [size.width(), size.height()]
+        self._layout_cards()
+
+    def _drag_scroll(self) -> None:
+        if self._drag_position is None:
+            return
+        point = self.scroll.viewport().mapFromGlobal(self._drag_position)
+        delta = -14 if point.y() < 30 else (14 if point.y() > self.scroll.viewport().height() - 30 else 0)
+        bar = self.scroll.verticalScrollBar()
+        bar.setValue(bar.value() + delta)
+        self._update_insert_marker(self.scroll.widget().mapFromGlobal(self._drag_position))
+
+    def _update_insert_marker(self, point) -> None:
+        visible = [c for c in self._ordered_columns() if not c.widget.isHidden()]
+        if not visible:
+            return
+        target = min(visible, key=lambda c: (
+            max(c.widget.y()-point.y(), 0, point.y()-c.widget.geometry().bottom()) * 10000
+            + abs(c.widget.geometry().center().x()-point.x())))
+        rect = target.widget.geometry()
+        before = point.x() <= rect.center().x()
+        self._insert_target = (target.sig.name, before)
+        x = rect.left()-3 if before else rect.right()+1
+        self._insert_marker.setGeometry(max(0,x), rect.top(), 5, rect.height())
+        self._insert_marker.show()
+        self._insert_marker.raise_()
+
+    def _move_card(self, name, target, before) -> None:
+        visible = [c.sig.name for c in self._ordered_columns() if not c.widget.isHidden()]
+        if name not in visible or target not in visible or name == target:
+            return
+        all_names = [c.sig.name for c in self._ordered_columns()]
+        slots = [i for i, n in enumerate(all_names) if n in visible]
+        visible.remove(name)
+        visible.insert(visible.index(target) + (0 if before else 1), name)
+        for i, n in zip(slots, visible):
+            all_names[i] = n
+        self._card_order = all_names
+        self._layout_cards()
+
+    def _ordered_columns(self):
+        rank = {name: i for i, name in enumerate(self._card_order)}
+        return sorted(self._columns, key=lambda c: rank.get(c.sig.name, len(rank)))
+
+    def card_layout_settings(self) -> dict:
+        return {"auto_size": self._auto_size, "sizes": self._card_sizes.copy(),
+                "order": [c.sig.name for c in self._ordered_columns()]}
+
+    def restore_card_layout(self, settings) -> None:
+        if not isinstance(settings, dict):
+            return
+        self._card_order = list(dict.fromkeys(n for n in settings.get("order", []) if isinstance(n, str))) if isinstance(settings.get("order", []), list) else []
+        self._auto_size = bool(settings.get("auto_size", False))
+        sizes = settings.get("sizes", {})
+        if isinstance(sizes, dict):
+            self._card_sizes = {name: list(size) for name, size in sizes.items()
+                                if isinstance(size, (list, tuple)) and len(size) == 2
+                                and all(type(v) is int and 1 <= v <= 3000 for v in size)}
+        self._layout_cards()
 
     # ------------------------------------------------------------------ 联动
 
@@ -462,6 +718,8 @@ class SignalPanel(QWidget):
             self.set_running(False)
             return
 
+        if not self._bus_enabled or self._external_locked:
+            return
         frames = self.current_frames()
         if not frames:
             self.message.emit("没有启用的信号，请先勾选至少一路信号")
@@ -480,9 +738,14 @@ class SignalPanel(QWidget):
         self.start_button.setText("停止" if running else "开始")
         self.mapping_button.setEnabled(not running)
 
+    def set_bus_enabled(self, enabled: bool) -> None:
+        self._bus_enabled = enabled
+        self.start_button.setEnabled(enabled and not self._external_locked)
+
     def set_external_lock(self, locked: bool) -> None:
         """外部锁定/解锁：数据模拟运行时禁用信号实验的开始和映射按钮。"""
-        self.start_button.setEnabled(not locked)
+        self._external_locked = locked
+        self.start_button.setEnabled(self._bus_enabled and not locked)
         self.mapping_button.setEnabled(not locked)
         if locked:
             self.start_button.setText("运行中")

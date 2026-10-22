@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from .widgets import OperationButton
+
 from PySide6.QtCore import QEvent, QRegularExpression, Qt, Signal
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (QComboBox, QGroupBox, QHBoxLayout,
@@ -82,7 +84,7 @@ class SendPanel(QGroupBox):
             row2.addWidget(edit)
         row2.addStretch(1)
 
-        self.send_button = QPushButton("发送")
+        self.send_button = OperationButton("发送")
         self.add_button = QPushButton("加入列表")
         self.period_ms = QSpinBox()
         self.period_ms.setRange(1, 600000)

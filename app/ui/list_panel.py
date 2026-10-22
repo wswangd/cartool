@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, Signal
+from .widgets import OperationButton
+
+from PySide6.QtCore import QEvent, QItemSelectionModel, QPersistentModelIndex, QSize, Qt, Signal
 from PySide6.QtWidgets import (QBoxLayout, QComboBox, QFileDialog, QHBoxLayout, QHeaderView,
                                QLabel, QLayout, QMenu, QPushButton, QSpinBox, QTableView,
                                QVBoxLayout, QWidget)
@@ -16,7 +18,7 @@ from ..models import (COL_DLC, COL_DATA, COL_ENABLED, COL_FORMAT, COL_ID,
                       COL_NOTE, COL_PERIOD, COL_REPEAT, COL_SEND_TYPE, COL_SENT,
                       COL_TYPE, SendListModel)
 from ..storage import StorageError
-from .widgets import ComboDelegate, SpinDelegate
+from .widgets import CenteredCheckDelegate, ComboDelegate, SpinDelegate
 
 
 class ListPanel(QWidget):
@@ -42,6 +44,7 @@ class ListPanel(QWidget):
     def _build(self) -> None:
         self.table = QTableView()
         self.table.setModel(self.model)
+        self.table.setItemDelegateForColumn(COL_ENABLED, CenteredCheckDelegate(self.table))
         self.table.hideColumn(COL_SENT)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setSelectionMode(QTableView.ExtendedSelection)
@@ -114,7 +117,7 @@ class ListPanel(QWidget):
             toolbar.addWidget(editor)
         self.interval_ms.setToolTip("同一轮中，相邻两条报文之间的间隔")
         self.cycle_interval_ms.setToolTip("本轮最后一条到下一轮第一条报文的间隔")
-        self.start_button = QPushButton("发送")
+        self.start_button = OperationButton("发送")
         self.start_button.clicked.connect(self._on_toggle_send)
         toolbar.addWidget(self.start_button)
         self._refresh_send_state()
@@ -157,13 +160,60 @@ class ListPanel(QWidget):
         self.model.parse_error.connect(self.message)
         self.table.customContextMenuRequested.connect(self._on_context_menu)
         self.model.dataChanged.connect(self._on_data_changed)
+        self.table.selectionModel().selectionChanged.connect(self._refresh_editor_selection)
         self.send_mode.currentIndexChanged.connect(self._refresh_send_state)
 
     def _open_editors(self, first: int, last: int) -> None:
         for row in range(first, last + 1):
             for col in self._editor_columns:
                 self.table.openPersistentEditor(self.model.index(row, col))
+                editor = self.table.indexWidget(self.model.index(row, col))
+                if editor is not None:
+                    index = QPersistentModelIndex(self.model.index(row, col))
+                    for target in [editor, *editor.findChildren(QWidget)]:
+                        target._send_list_index = index
+                        target.installEventFilter(self)
         self._refresh_send_state()
+        self._refresh_editor_selection()
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+            index = getattr(watched, "_send_list_index", None)
+            if index is not None and index.isValid():
+                selection = self.table.selectionModel()
+                if not selection.isRowSelected(index.row()):
+                    flags = QItemSelectionModel.Select | QItemSelectionModel.Rows
+                    if not event.modifiers() & (Qt.ControlModifier | Qt.ShiftModifier):
+                        flags |= QItemSelectionModel.Clear
+                    selection.setCurrentIndex(self.model.index(index.row(), index.column()), flags)
+                self._refresh_editor_selection()
+        return super().eventFilter(watched, event)
+
+    def _refresh_editor_selection(self, *args) -> None:
+        selected = {index.row() for index in self.table.selectionModel().selectedRows()}
+        palette = self.table.palette()
+        background = palette.highlight().color().name()
+        foreground = palette.highlightedText().color().name()
+        popup_background = palette.base().color().name()
+        popup_foreground = palette.text().color().name()
+        for row in range(self.model.rowCount()):
+            for column in self._editor_columns:
+                editor = self.table.indexWidget(self.model.index(row, column))
+                if editor is not None:
+                    editor.setStyleSheet(
+                        f"QComboBox, QSpinBox, QLineEdit {{ background-color: {background}; color: {foreground}; }}"
+                        f"QComboBox QAbstractItemView {{ background-color: {popup_background}; color: {popup_foreground};"
+                        f" selection-background-color: {background}; selection-color: {foreground}; }}"
+                        if row in selected else "")
+                    if isinstance(editor, QComboBox):
+                        # 弹层有独立的容器，不能继承选中单元格的蓝色背景。
+                        view = editor.view()
+                        view.setStyleSheet(
+                            f"QAbstractItemView {{ background: {popup_background}; color: {popup_foreground};"
+                            f" border: 1px solid #B8BEC5; selection-background-color: {background};"
+                            f" selection-color: {foreground}; }}")
+                        view.window().setStyleSheet(
+                            f"QFrame {{ background: {popup_background}; border: 1px solid #B8BEC5; }}")
 
     def _close_editors(self, first: int, last: int) -> None:
         for row in range(first, last + 1):
@@ -176,7 +226,9 @@ class ListPanel(QWidget):
 
     def _on_rows_removed(self, parent, first: int, last: int) -> None:
         self._refresh_count()
-        self._close_editors(first, last)
+        # QTableView 已随模型移除被删除行的编辑器；此时旧行号属于后续行。
+        self._refresh_send_state()
+        self._refresh_editor_selection()
 
     def _on_model_reset(self) -> None:
         self._refresh_count()
@@ -236,17 +288,21 @@ class ListPanel(QWidget):
         self.table.setFocus(Qt.OtherFocusReason)
         enabled = self.model.enabled_items()
         sequential = self.send_mode.currentIndex() == 1
-        if not enabled or (not sequential and any(item.period_ms <= 0 for item in enabled)):
-            self.message.emit("请勾选至少一条报文，并将所有启用行的周期设为大于 0")
+        if not enabled or (not sequential and any(item.period_ms <= 0 and item.repeat != 1 for item in enabled)):
+            self.message.emit("请勾选至少一条报文；次数不为 1 的启用行需设置大于 0 的周期")
             return
         tasks = []
+        single_frames = []
         for item in enabled:
-            if not sequential and item.period_ms <= 0:
+            if not sequential and item.repeat == 1:
+                single_frames.append(item.frame.copy())
                 continue
             tasks.append((item.uid, item.frame.copy(), item.period_ms, item.repeat))
             self._running.add(item.uid)
+        if single_frames:
+            self.send_frames.emit(single_frames)
         if not tasks:
-            self.message.emit("没有可定时的报文：需勾选启用并把周期设为大于 0")
+            self.message.emit(f"已发送 {len(single_frames)} 条单次报文")
             return
         self._refresh_send_state()
         if self.send_mode.currentIndex() == 1:
@@ -288,6 +344,8 @@ class ListPanel(QWidget):
         self.table.scrollTo(self.model.index(row, COL_ID))
 
     def _on_data_changed(self, top_left, bottom_right, roles=()) -> None:
+        if top_left.column() <= COL_REPEAT <= bottom_right.column():
+            self._refresh_send_state()
         if top_left.column() == COL_SENT:
             return
         for row in range(top_left.row(), bottom_right.row() + 1):
@@ -314,6 +372,7 @@ class ListPanel(QWidget):
             self.message.emit("文件里没有有效报文")
             return
         for item in items:
+            item.enabled = False
             item.uid = self.model.new_uid()
         self.model.append_items(items)
         self.message.emit(f"已导入 {len(items)} 条报文")
@@ -351,17 +410,12 @@ class ListPanel(QWidget):
             row = index.row()
             item = self.model.item(row)
             running = item.uid in self._running
-            menu.addAction("立即发送本帧", lambda: self._dispatch([item.frame.copy()], ""))
             if running:
                 menu.addAction("停止本行定时", lambda: self._stop_one(item.uid))
-            elif self.send_mode.currentIndex() == 0:
-                menu.addAction("开始本行定时", lambda: self._start_one(item))
             menu.addSeparator()
             menu.addAction("在下方插入行", lambda: self._insert_below(row))
             menu.addAction("删除本行", lambda: self._remove_row(row))
             menu.addSeparator()
-        send_action = menu.addAction(self.start_button.text(), self._on_toggle_send)
-        send_action.setEnabled(self.start_button.isEnabled())
         menu.exec(self.table.viewport().mapToGlobal(position))
 
     def _start_one(self, item: SendItem) -> None:
@@ -414,12 +468,22 @@ class ListPanel(QWidget):
                        self.cycle_interval_label, self.cycle_interval_ms):
             widget.setVisible(sequential)
             widget.setEnabled(not self._running)
-        self.table.setEnabled(not self._running)
+        self.table.setEnabled(True)
+        if self._running:
+            self.table.setFocus()
         for row in range(self.model.rowCount()):
-            for column in (COL_REPEAT, COL_PERIOD):
+            for column in self._editor_columns:
                 editor = self.table.indexWidget(self.model.index(row, column))
                 if editor is not None:
-                    editor.setEnabled(not sequential)
+                    single = self.model.item(row).repeat == 1
+                    editor.setEnabled((not sequential and not (column == COL_PERIOD and single))
+                                      if column in (COL_REPEAT, COL_PERIOD) else True)
+                    editor.setAttribute(Qt.WA_TransparentForMouseEvents, bool(self._running))
+                    editor.setFocusPolicy(Qt.NoFocus if self._running else Qt.StrongFocus)
+                    if isinstance(editor, QSpinBox):
+                        editor.setReadOnly(bool(self._running))
+                    if isinstance(editor, QComboBox) and editor.lineEdit() is not None:
+                        editor.lineEdit().setReadOnly(bool(self._running))
         for button in self.findChildren(QPushButton):
             if button.text() in ("新增", "删除", "清空", "导入"):
                 button.setEnabled(not self._running)

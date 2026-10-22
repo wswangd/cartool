@@ -145,6 +145,8 @@ class SendListModel(QAbstractTableModel):
             return Qt.NoItemFlags
         base = Qt.ItemIsEnabled | Qt.ItemIsSelectable
         col = index.column()
+        if self._sending:
+            return base
         if col == COL_ENABLED:
             return base | Qt.ItemIsUserCheckable
         if col == COL_SENT:
