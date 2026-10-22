@@ -15,6 +15,7 @@ from ..worker import BusWorker
 from ..zlgcan_api import ZcanApi, ZlgError
 from .device_panel import DevicePanel
 from .list_panel import ListPanel
+from .measurement_panel import MeasurementPanel
 from .send_panel import SendPanel
 from .signal_panel import SignalPanel
 from .simulate_panel import SimulatePanel
@@ -83,8 +84,10 @@ class MainWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self._send_splitter, "报文发送")
-        self.tabs.addTab(self.signal_panel, "信号实验")
+        self.tabs.addTab(self.signal_panel, "信号发送")
         self.tabs.addTab(self.simulate_panel, "数据模拟")
+        self.measurement_panel = MeasurementPanel()
+        self.tabs.addTab(self.measurement_panel, "信号测量")
 
         self.trace_panel = TracePanel()
         trace_group = QGroupBox("报文显示")
@@ -144,6 +147,7 @@ class MainWindow(QMainWindow):
         self.list_panel.model.parse_error.connect(self._show_message)
 
         self.trace_panel.message.connect(self._show_message)
+        self.measurement_panel.message.connect(self._show_message)
 
         self.signal_panel.start_requested.connect(self._on_signal_start)
         self.signal_panel.stop_requested.connect(self._on_signal_stop)
@@ -189,6 +193,7 @@ class MainWindow(QMainWindow):
         self._tx_total = self._rx_total = self._err_total = 0
         self._worker = BusWorker(bus)
         self._worker.records.connect(self.trace_panel.add_records)
+        self._worker.records.connect(self.measurement_panel.add_records)
         self._worker.progress.connect(self._on_progress)
         self._worker.task_done.connect(self._on_task_done)
         self._worker.sequence_done.connect(self.list_panel.sequence_finished)
@@ -211,15 +216,17 @@ class MainWindow(QMainWindow):
         self._show_message("已断开连接")
 
     def _teardown(self) -> None:
+        self.simulate_panel.stop()
         if self._worker is not None:
             self._worker.stop_all_periodic()
             self._worker.shutdown()
             self._worker.deleteLater()
             self._worker = None
-        if self._signal_uids:
-            self._signal_uids = []
-            self._signal_cycles = {}
-            self.signal_panel.set_running(False)
+        self._signal_uids = []
+        self._signal_cycles = {}
+        self.signal_panel.set_running(False)
+        self.signal_panel.set_external_lock(False)
+        self.simulate_panel.set_enabled(True)
         if self._bus is not None:
             try:
                 self._bus.close()
@@ -229,6 +236,7 @@ class MainWindow(QMainWindow):
         self.send_panel.set_running(False)
 
     def _set_connected(self, connected: bool) -> None:
+        self.measurement_panel.set_connected(connected)
         self.send_panel.set_bus_enabled(connected)
         self.list_panel.set_bus_enabled(connected)
         if not connected:
@@ -315,7 +323,7 @@ class MainWindow(QMainWindow):
             self._worker.start_periodic(uid, frame, period, 0)
         id_summary = ", ".join(f"{fid:08X}={cycles.get(fid, 100)}ms"
                                for fid in sorted(cycles))
-        self._show_message(f"信号实验已开始：{len(frames)} 路报文（{id_summary}）")
+        self._show_message(f"信号发送已开始：{len(frames)} 路报文（{id_summary}）")
         # 禁用数据模拟面板
         self.simulate_panel.set_enabled(False)
 
@@ -325,20 +333,29 @@ class MainWindow(QMainWindow):
                 self._worker.stop_periodic(uid)
         self._signal_uids = []
         self._signal_cycles = {}
-        self._show_message("信号实验已停止")
+        self._show_message("信号发送已停止")
         # 启用数据模拟面板
         self.simulate_panel.set_enabled(True)
 
     def _on_signal_values(self, frames: list[CanFrame]) -> None:
-        if not self._signal_uids or self._worker is None:
+        if self._worker is None or not (self.signal_panel._running or self.simulate_panel.is_playing()):
             return
         wanted = {SIGNAL_UID_BASE + frame.frame_id: frame for frame in frames}
         for uid in list(self._signal_uids):
             if uid not in wanted:
                 self._worker.stop_periodic(uid)
+        if not wanted:
+            self._signal_uids = []
+            if self.simulate_panel.is_playing():
+                self._signal_cycles = {}
+            else:
+                self._on_signal_stop()
+                self.signal_panel.set_running(False)
+            return
         for uid, frame in wanted.items():
             can_id = frame.frame_id
-            period = self._signal_cycles.get(can_id, 100)
+            period = (self.simulate_panel.row_period.value() if self.simulate_panel.is_playing()
+                      else self._signal_cycles.get(can_id, self.signal_panel._cycles.get(can_id, 100)))
             if uid in self._signal_uids:
                 self._worker.update_frame(uid, frame)
             else:
@@ -351,6 +368,7 @@ class MainWindow(QMainWindow):
     def _on_simulate_row(self, values: dict) -> None:
         """数据模拟播放一行数据时，将值写入信号实验面板的滑杆。"""
         self.signal_panel.apply_csv_values(values)
+        self._on_signal_values(self.signal_panel.current_frames())
 
     def _on_simulate_started(self) -> None:
         """数据模拟开始播放时，自动启动信号实验发送。"""
@@ -359,11 +377,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "提示", "请先打开设备")
             return
         # 获取当前信号面板的报文并启动周期发送
+        self.signal_panel.apply_csv_values(self.simulate_panel.current_values())
         frames = self.signal_panel.current_frames()
-        if not frames:
-            self.simulate_panel.stop()
-            self._show_message("没有启用的信号，请先在信号实验中勾选至少一路信号")
-            return
         # 停止之前的信号实验发送
         if self._signal_uids:
             for uid in self._signal_uids:
@@ -375,10 +390,8 @@ class MainWindow(QMainWindow):
         for frame in frames:
             cycles[frame.frame_id] = row_period
         self._signal_cycles = cycles
-        for i, (uid, frame) in enumerate(zip(self._signal_uids, frames)):
-            # 每个报文错开 10ms 发送，避免瞬时负载过高
-            offset = i * 10
-            self._worker.start_periodic(uid, frame, row_period, offset)
+        for uid, frame in zip(self._signal_uids, frames):
+            self._worker.start_periodic(uid, frame, row_period, 0)
         self._show_message(f"数据模拟已开始：{len(frames)} 路报文，行周期={row_period}ms")
         # 锁定信号实验面板
         self.signal_panel.set_external_lock(True)
@@ -389,6 +402,7 @@ class MainWindow(QMainWindow):
             for uid in self._signal_uids:
                 self._worker.stop_periodic(uid)
         self._signal_uids = []
+        self._signal_cycles = {}
         self._show_message("数据模拟已停止")
         # 解锁信号实验面板，清除 CSV 高亮
         self.signal_panel.set_external_lock(False)
@@ -400,6 +414,7 @@ class MainWindow(QMainWindow):
             for uid in self._signal_uids:
                 self._worker.stop_periodic(uid)
         self._signal_uids = []
+        self._signal_cycles = {}
         self._show_message("数据模拟已完成")
         # 解锁信号实验面板，清除 CSV 高亮
         self.signal_panel.set_external_lock(False)

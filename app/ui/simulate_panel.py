@@ -89,6 +89,7 @@ class SimulatePanel(QWidget):
         self._expected_names: list[str] = []  # 映射配置的信号名
         self._last_dir = str(os.path.expanduser("~"))
         self._playing = False
+        self._enabled = True
         self._row_index = 0
         self._cycle_count = 0
         self._playback_timer = QTimer(self)
@@ -157,6 +158,9 @@ class SimulatePanel(QWidget):
     # ------------------------------------------------------------------ 导入
 
     def _on_import(self) -> None:
+        if not self._enabled:
+            self.message.emit("信号发送正在运行，请先停止信号发送")
+            return
         if self._playing:
             self.message.emit("请先停止播放再导入数据")
             return
@@ -289,6 +293,9 @@ class SimulatePanel(QWidget):
         if self._playing:
             self._stop()
             return
+        if not self._enabled:
+            self.message.emit("信号发送正在运行，请先停止信号发送")
+            return
         if not self._csv_rows:
             self.message.emit("请先导入数据文件")
             return
@@ -296,7 +303,7 @@ class SimulatePanel(QWidget):
         self._row_index = 0
         self._cycle_count = 0
         self.start_button.setText("停止")
-        self.import_button.setEnabled(False)
+        self._refresh_controls()
         self.send_mode.setEnabled(False)
         self.row_period.setEnabled(False)
         self._playback_timer.start(max(self.row_period.value(), 10))
@@ -307,7 +314,7 @@ class SimulatePanel(QWidget):
         self._playing = False
         self._playback_timer.stop()
         self.start_button.setText("开始")
-        self.import_button.setEnabled(True)
+        self._refresh_controls()
         self.send_mode.setEnabled(True)
         self.row_period.setEnabled(True)
         self._update_progress()
@@ -362,6 +369,12 @@ class SimulatePanel(QWidget):
     def csv_rows(self) -> list[dict[str, float]]:
         return list(self._csv_rows)
 
+    def current_values(self) -> dict[str, float]:
+        if not self._csv_rows:
+            return {}
+        index = max(0, min(self._row_index - 1, len(self._csv_rows) - 1))
+        return dict(self._csv_rows[index])
+
     def is_playing(self) -> bool:
         return self._playing
 
@@ -371,8 +384,15 @@ class SimulatePanel(QWidget):
 
     def set_enabled(self, enabled: bool) -> None:
         """启用/禁用开始按钮和导入按钮，用于与信号实验互斥。"""
-        self.start_button.setEnabled(enabled)
-        self.import_button.setEnabled(enabled)
+        self._enabled = enabled
+        self._refresh_controls()
+
+    def _refresh_controls(self) -> None:
+        self.start_button.setEnabled(self._playing or self._enabled)
+        self.import_button.setEnabled(self._enabled and not self._playing)
+        self.import_button.setToolTip(
+            "请先停止数据模拟" if self._playing else
+            "信号发送正在运行，请先停止信号发送" if not self._enabled else "")
 
     def set_signal_names(self, names: list[str]) -> None:
         """设置映射配置的信号名列表，用于导入 CSV 时校验。"""

@@ -107,8 +107,8 @@ class _Column:
         self.widget.setObjectName("signalCard")
         self.widget.setMinimumWidth(CARD_WIDTH)
         self.widget.setStyleSheet(
-            "QFrame#signalCard { border: 1px solid #D8DDE3; border-radius: 8px; }"
-            "QFrame#signalCard[active=\"false\"] { border-color: #E5E7EB; }")
+            "QFrame#signalCard { background-color: #FFFFFF; border: 1px solid #D8DDE3; border-radius: 8px; }"
+            "QFrame#signalCard[active=\"false\"] { background-color: #F3F4F6; border-color: #E5E7EB; }")
         layout = QVBoxLayout(self.widget)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(3)
@@ -305,7 +305,7 @@ class SignalPanel(QWidget):
         top.addWidget(self.enabled_only)
         top.addStretch(1)
 
-        self.mapping_button = QPushButton("映射配置")
+        self.mapping_button = QPushButton("信号配置")
         self.mapping_button.setFixedWidth(90)
         top.addWidget(self.mapping_button)
         self.start_button = QPushButton("开始")
@@ -332,6 +332,8 @@ class SignalPanel(QWidget):
         if old is not None:
             old.deleteLater()
         container = QWidget()
+        container.setObjectName("signalCardsContainer")
+        container.setStyleSheet("QWidget#signalCardsContainer { background-color: #ECEFF1; }")
         grid = QGridLayout(container)
         self._card_grid = grid
         grid.setContentsMargins(2, 2, 2, 2)
@@ -397,7 +399,7 @@ class SignalPanel(QWidget):
             self._columns[idx]._refresh_combo_display()
         if self.enabled_only.isChecked():
             self._layout_cards()
-        self._schedule_emit()
+        self._emit_values()
 
     def _on_slider(self, column: _Column, scaled: int) -> None:
         # 将滑杆值对齐到分辨率网格
@@ -434,7 +436,8 @@ class SignalPanel(QWidget):
         self._schedule_emit()
 
     def _schedule_emit(self) -> None:
-        self._emit_timer.start(EMIT_DELAY_MS)
+        if not self._emit_timer.isActive():
+            self._emit_timer.start(EMIT_DELAY_MS)
 
     def _emit_values(self) -> None:
         self.values_changed.emit(self.current_frames())
@@ -500,7 +503,7 @@ class SignalPanel(QWidget):
             self.message.emit(str(exc))
         self._rebuild_columns()
         self._schedule_emit()
-        self.message.emit("信号映射已保存到 signals.json")
+        self.message.emit("信号配置已保存到 signals.json")
         self.mapping_changed.emit([d.name for d in self._defs])
 
     # ------------------------------------------------------------------ CSV 数据驱动

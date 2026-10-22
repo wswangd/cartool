@@ -87,7 +87,7 @@ class MappingDialog(QDialog):
                  cycles: dict[int, int] | None = None,
                  parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("信号映射配置")
+        self.setWindowTitle("信号配置")
         self.resize(1150, 620)
         self._defs = [SignalDef(name=d.name, unit=d.unit, minimum=d.minimum,
                                 maximum=d.maximum, default=d.default,
