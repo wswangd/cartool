@@ -47,7 +47,7 @@ class MeasurementGrip(CornerGrip):
         delta = event.globalPosition().toPoint() - self.start
         maximum = max(220, self.card.parentWidget().width()-12) if self.card.parentWidget() else 2000
         w = max(220, min(maximum, self.original.width()+self.sx*delta.x())) if self.sx else self.original.width()
-        minimum_h = 160 if self.card.scope else 36
+        minimum_h = self.card.minimum_expanded_height() if self.card.scope else 36
         h = max(minimum_h, min(2000, self.original.height()+self.sy*delta.y())) if self.sy else self.original.height()
         self.target_size = QSize(w,h)
         x = self.original.x() if self.sx >= 0 else self.original.right()+1-w
@@ -89,7 +89,8 @@ class MeasurementCard(QFrame):
         self.setStyleSheet(
             "QFrame#measurementCard { background: white; border: 1px solid #DDE3E8; border-radius: 6px; }"
             "QFrame#measurementCard[dragOver=\"true\"] { border-color: #DDE3E8; }"
-            "QFrame#measurementCard[selected=\"true\"] { border: 2px solid #0078D4; }")
+            "QFrame#measurementCard[selected=\"true\"] { border: 2px solid #0078D4; }"
+            "QToolTip { font-weight: normal; }")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setAcceptDrops(True)
         self.setFocusPolicy(Qt.ClickFocus)
@@ -102,7 +103,7 @@ class MeasurementCard(QFrame):
         self._merged_plot = None
         self._merge_center = False
         self._merge_hint = QLabel("松开合并", self)
-        self._merge_hint.setStyleSheet("background:#DCEEFF; color:#005A9E; border:1px solid #86BFF0; padding:6px;")
+        self._merge_hint.setStyleSheet("background:#DCEEFF; color:#005A9E; border:1px solid #86BFF0; padding:6px; font-weight:normal;")
         self._merge_hint.setAttribute(Qt.WA_TransparentForMouseEvents)
         self._merge_hint.hide()
         self._grips = [MeasurementGrip(self,x,y) for x,y in ((-1,-1),(1,-1),(-1,1),(1,1),(-1,0),(1,0),(0,-1),(0,1))]
@@ -166,6 +167,8 @@ class MeasurementCard(QFrame):
             label.setCursor(Qt.OpenHandCursor)
 
     def apply_size(self, size):
+        if self.scope is not None:
+            size = QSize(size.width(), max(size.height(), self.minimum_expanded_height()))
         self.size_requested.emit(self, size)
         self._custom_sizes[self.scope is not None] = size
         self.resized.emit()
@@ -180,13 +183,17 @@ class MeasurementCard(QFrame):
             grip.setGeometry(x,y, self.width()-28 if not grip.sx else thickness,
                              self.height()-28 if not grip.sy else thickness)
             grip.raise_()
-        if self._merged_plot is not None:
-            self._merged_plot.setFixedHeight(max(120,self.height()-self.header_widget.sizeHint().height()-self._merged_legend.sizeHint().height()-24))
-        elif self.scope is not None:
-            self.scope.setFixedHeight(max(120,self.height()-self.header_widget.sizeHint().height()-18))
         if self.scope is None:
             self._text_scale = max(0.9, min(self.height()/36, self.width()/220))
         self._apply_text_style()
+
+    def minimum_expanded_height(self):
+        margins = self._layout.contentsMargins()
+        height = self.header_widget.sizeHint().height() + margins.top() + margins.bottom()
+        height += self._layout.spacing() + 80
+        if self._merged_plot is not None:
+            height += self._merged_legend.sizeHint().height() + self._layout.spacing()
+        return max(160, height)
 
     def _apply_text_style(self):
         size = 9 if self.scope is not None else max(8,min(48,9*self._text_scale))
@@ -199,7 +206,9 @@ class MeasurementCard(QFrame):
             font.setPointSizeF(size)
             font.setBold(bold)
             label.setFont(font)
-            label.setStyleSheet(f"color: {color}; font-size: {size:g}pt; font-weight: {'bold' if bold else 'normal'};")
+            label.setStyleSheet(
+                f"QLabel {{ color: {color}; font-size: {size:g}pt; font-weight: {'bold' if bold else 'normal'}; }}"
+                "QToolTip { font-weight: normal; }")
 
     def eventFilter(self, watched, event) -> bool:
         if watched not in (self.header_widget, self.name_label, self.unit_label):
@@ -383,7 +392,8 @@ class MeasurementCard(QFrame):
             self.scope.time_range_changed.connect(self._set_time_max)
             self.scope.cursor_moved.connect(self.cursor_moved.emit)
             self.scope.set_linked_cursor(getattr(self,"_linked_cursor",None))
-            self.scope.setFixedHeight(120)
+            self.scope.setMinimumSize(0, 0)
+            self.scope.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self._layout.addWidget(self.scope)
             self.scope.show()
         if not expanded and self.scope is not None:

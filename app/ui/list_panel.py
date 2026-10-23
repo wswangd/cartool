@@ -26,12 +26,14 @@ class ListPanel(QWidget):
     start_tasks = Signal(object)     # list[tuple[uid, CanFrame, period_ms, repeat]]
     start_sequence = Signal(object, int, int, int)
     stop_tasks = Signal(object)      # list[uid]
+    selection_changed = Signal(object, bool)
     message = Signal(str)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.model = SendListModel(self)
         self._running: set[int] = set()
+        self._active = False
         self._bus_enabled = False
         self._last_dir = str(Path.home())
         self._editor_columns = {COL_FORMAT, COL_TYPE, COL_SEND_TYPE, COL_DLC,
@@ -43,6 +45,8 @@ class ListPanel(QWidget):
 
     def _build(self) -> None:
         self.table = QTableView()
+        self.table.setStyleSheet(
+            "QTableView::item:selected { color: white; background-color: palette(highlight); }")
         self.table.setModel(self.model)
         self.table.setItemDelegateForColumn(COL_ENABLED, CenteredCheckDelegate(self.table))
         self.table.hideColumn(COL_SENT)
@@ -193,7 +197,7 @@ class ListPanel(QWidget):
         selected = {index.row() for index in self.table.selectionModel().selectedRows()}
         palette = self.table.palette()
         background = palette.highlight().color().name()
-        foreground = palette.highlightedText().color().name()
+        foreground = "#ffffff"
         popup_background = palette.base().color().name()
         popup_foreground = palette.text().color().name()
         for row in range(self.model.rowCount()):
@@ -277,13 +281,13 @@ class ListPanel(QWidget):
         self.send_frames.emit(frames)
 
     def _on_toggle_send(self) -> None:
-        if self._running:
+        if self._active or self._running:
             self._on_stop_periodic()
         else:
             self._on_start_periodic()
 
     def _on_start_periodic(self) -> None:
-        if not self._bus_enabled or self._running:
+        if not self._bus_enabled or self._active or self._running:
             return
         self.table.setFocus(Qt.OtherFocusReason)
         enabled = self.model.enabled_items()
@@ -304,6 +308,7 @@ class ListPanel(QWidget):
         if not tasks:
             self.message.emit(f"已发送 {len(single_frames)} 条单次报文")
             return
+        self._active = True
         self._refresh_send_state()
         if self.send_mode.currentIndex() == 1:
             self.start_sequence.emit(tasks, self.loop_count.value(),
@@ -313,11 +318,12 @@ class ListPanel(QWidget):
         self.message.emit(f"已启动 {len(tasks)} 条定时报文")
 
     def _on_stop_periodic(self) -> None:
-        if not self._running:
+        if not self._active and not self._running:
             self.message.emit("当前没有正在定时的报文")
             return
         uids = list(self._running)
         self._running.clear()
+        self._active = False
         self._refresh_send_state()
         self.stop_tasks.emit(uids)
         self.message.emit(f"已停止 {len(uids)} 条定时报文")
@@ -325,6 +331,8 @@ class ListPanel(QWidget):
     def mark_task_finished(self, uid: int) -> None:
         if uid in self._running:
             self._running.discard(uid)
+            if not self._running:
+                self._active = False
             self._refresh_send_state()
             self.message.emit(f"第 {self.model.row_of_uid(uid) + 1} 行报文已按设定次数发送完毕")
 
@@ -333,6 +341,7 @@ class ListPanel(QWidget):
 
     def sequence_finished(self) -> None:
         self._running.clear()
+        self._active = False
         self._refresh_send_state()
         self.message.emit("列表循环发送完成")
 
@@ -344,6 +353,28 @@ class ListPanel(QWidget):
         self.table.scrollTo(self.model.index(row, COL_ID))
 
     def _on_data_changed(self, top_left, bottom_right, roles=()) -> None:
+        if (top_left.column() <= COL_ENABLED <= bottom_right.column()
+                and Qt.CheckStateRole in roles and self._active):
+            sequential = self.send_mode.currentIndex() == 1
+            changed = []
+            for row in range(top_left.row(), bottom_right.row() + 1):
+                item = self.model.item(row)
+                if item.enabled:
+                    if not sequential and item.period_ms <= 0 and item.repeat != 1:
+                        item.enabled = False
+                        self.message.emit("该行周期需大于 0")
+                        continue
+                    self._running.add(item.uid)
+                else:
+                    self._running.discard(item.uid)
+                changed.append((item.uid, item.frame.copy(), item.period_ms,
+                                item.repeat, item.enabled))
+            if sequential:
+                changed = [(item.uid, item.frame.copy(), item.period_ms,
+                            item.repeat, True) for item in self.model.enabled_items()]
+            self.selection_changed.emit(changed, sequential)
+            self._refresh_send_state()
+            return
         if top_left.column() <= COL_REPEAT <= bottom_right.column():
             self._refresh_send_state()
         if top_left.column() == COL_SENT:
@@ -399,7 +430,7 @@ class ListPanel(QWidget):
     # ------------------------------------------------------------- 右键菜单
 
     def _on_context_menu(self, position) -> None:
-        if self._running:
+        if self._active or self._running:
             menu = QMenu(self)
             menu.addAction("停止", self._on_stop_periodic)
             menu.exec(self.table.viewport().mapToGlobal(position))
@@ -450,24 +481,26 @@ class ListPanel(QWidget):
         self._bus_enabled = enabled
         if not enabled:
             self._running.clear()
+            self._active = False
         self._refresh_send_state()
 
     def _refresh_send_state(self) -> None:
-        self.model.set_sending(bool(self._running))
-        self.start_button.setText("停止" if self._running else "发送")
+        active = self._active or bool(self._running)
+        self.model.set_sending(active)
+        self.start_button.setText("停止" if active else "发送")
         self.start_button.setEnabled(self._bus_enabled)
-        self.send_mode.setEnabled(not self._running)
+        self.send_mode.setEnabled(not active)
         sequential = self.send_mode.currentIndex() == 1
         self.table.setColumnHidden(COL_PERIOD, sequential)
         self.table.setColumnHidden(COL_REPEAT, sequential)
         self.table.setColumnHidden(COL_SENT, True)
         self.loop_label.setVisible(sequential)
         self.loop_count.setVisible(sequential)
-        self.loop_count.setEnabled(not self._running)
+        self.loop_count.setEnabled(not active)
         for widget in (self.interval_label, self.interval_ms,
                        self.cycle_interval_label, self.cycle_interval_ms):
             widget.setVisible(sequential)
-            widget.setEnabled(not self._running)
+            widget.setEnabled(not active)
         self.table.setEnabled(True)
         if self._running:
             self.table.setFocus()
@@ -478,13 +511,13 @@ class ListPanel(QWidget):
                     single = self.model.item(row).repeat == 1
                     editor.setEnabled((not sequential and not (column == COL_PERIOD and single))
                                       if column in (COL_REPEAT, COL_PERIOD) else True)
-                    editor.setAttribute(Qt.WA_TransparentForMouseEvents, bool(self._running))
-                    editor.setFocusPolicy(Qt.NoFocus if self._running else Qt.StrongFocus)
+                    editor.setAttribute(Qt.WA_TransparentForMouseEvents, active)
+                    editor.setFocusPolicy(Qt.NoFocus if active else Qt.StrongFocus)
                     if isinstance(editor, QSpinBox):
-                        editor.setReadOnly(bool(self._running))
+                        editor.setReadOnly(active)
                     if isinstance(editor, QComboBox) and editor.lineEdit() is not None:
-                        editor.lineEdit().setReadOnly(bool(self._running))
+                        editor.lineEdit().setReadOnly(active)
         for button in self.findChildren(QPushButton):
             if button.text() in ("新增", "删除", "清空", "导入"):
-                button.setEnabled(not self._running)
+                button.setEnabled(not active)
         self._update_toolbar_layout()

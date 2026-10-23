@@ -386,6 +386,8 @@ class MeasurementPanel(QWidget):
             h = size.height() if size else (160 if card.scope else 36)
             if card._merged_plot is not None and not card.expand_button.isChecked():
                 h = 40+card._merged_legend.sizeHint().height()
+            elif card.scope is not None:
+                h = max(h, card.minimum_expanded_height())
             xs = sorted({0} | {rect.right()+6 for rect in placed})
             ys = sorted({0} | {rect.bottom()+6 for rect in placed})
             target = None
@@ -405,8 +407,6 @@ class MeasurementPanel(QWidget):
             card.move(target.topLeft())
             card.show()
             card._layout.activate()
-            if card._merged_plot is None and card.scope is not None:
-                card.scope.setFixedHeight(max(120,h-card.header_widget.sizeHint().height()-18))
             placed.append(target)
         self.container.setMinimumHeight(max(80,max((rect.bottom()+1 for rect in placed),default=0)))
         self._refresh_card_selection()
@@ -543,6 +543,8 @@ class MeasurementPanel(QWidget):
             rows.addWidget(data_row)
             target._merged_values.append((member,value))
         target._layout.addWidget(target._merged_legend)
+        target._merged_plot.setMinimumSize(0, 0)
+        target._merged_plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         target._layout.addWidget(target._merged_plot)
         target.scope.hide()
         target.name_label.full_text = target.name

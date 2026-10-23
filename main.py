@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from app.bus import BACKEND_SIM, BusConfig  # noqa: E402
 from app.ui.main_window import MainWindow  # noqa: E402
+from app.ui.widgets import VerticalScrollBarMenuFilter  # noqa: E402
 
 
 def main() -> int:
@@ -23,6 +24,8 @@ def main() -> int:
     app = QApplication([arg for arg in sys.argv if arg != "--sim"])
     app.setApplicationName("CANTool")
     app.setOrganizationName("cartool")
+    scrollbar_menu_filter = VerticalScrollBarMenuFilter(app)
+    app.installEventFilter(scrollbar_menu_filter)
 
     window = MainWindow()
     if simulate:

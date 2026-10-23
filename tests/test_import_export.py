@@ -20,7 +20,7 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 # 让 main.py 所在目录在 sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
 from PySide6.QtCore import QItemSelection, QItemSelectionModel  # noqa: E402

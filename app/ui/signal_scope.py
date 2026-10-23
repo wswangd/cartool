@@ -138,6 +138,10 @@ class SignalScope(QWidget):
             self.samples.popleft()
         self.update()
 
+    @staticmethod
+    def _time_tick_text(value: float, endpoint: bool = False) -> str:
+        return f"{value:g}" + (" s" if endpoint else "")
+
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -174,7 +178,7 @@ class SignalScope(QWidget):
                              QPointF(position, plot.bottom() + (5 if major else 3)))
             if major:
                 tick = -self.WINDOW_SECONDS + self.WINDOW_SECONDS * index / (major_count * subdivisions)
-                text = f"{tick:g}" + (" s" if index == major_count * subdivisions else "")
+                text = self._time_tick_text(tick, index in (0, major_count * subdivisions))
                 label = QRectF(position - 25, plot.bottom() + 5, 50, 18)
                 if index == 0:
                     label.moveLeft(plot.left())

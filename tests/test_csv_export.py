@@ -36,7 +36,7 @@ record2 = TraceRecord(
 )
 
 # 导出 CSV
-output_path = Path('test_csv_export.csv')
+output_path = Path(__file__).resolve().parent / 'test_csv_export.csv'
 export_trace_csv(output_path, [record1, record2])
 
 # 读取并显示内容

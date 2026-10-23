@@ -1,0 +1,434 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: ECU Monitor
+
+
+BO_ 2566869309 ENGINE: 8 ECU
+ SG_ QinjLperH : 48|16@1+ (1,0) [0.0|250.0] ""  Monitor
+ SG_ Vspeed : 32|16@1+ (1,0) [0.0|255.0] "km/h"  Monitor
+ SG_ ENGINE_n : 24|8@1+ (1,0) [0.0|125.0] "%"  Monitor
+ SG_ Torque : 16|8@1+ (1,0) [0.0|128.0] "%"  Monitor
+ SG_ N : 0|16@1+ (1,0) [0.0|4000.0] "r/min"  Monitor
+
+BO_ 2364539904 ENGINE_BOSCH: 8 ECU
+ SG_ Torque_b : 16|8@1- (1,0) [0.0|100.0] "%"  Monitor
+
+BO_ 2565874688 SLAVE_Doser1: 8 ECU
+ SG_ FCC_STATE : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ FCC_DTC : 40|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ FCC_Integral : 24|16@1+ (1,0) [0.0|65535.0] ""  Monitor
+ SG_ DEF : 0|16@1+ (0.3,0.0) [0.0|2000000.0] "g/h"  Monitor
+
+BO_ 2364548096 SLAVE_Doser1_1: 8 ECU
+ SG_ DEF2 : 0|16@1+ (0.3,0.0) [0.0|2000000.0] "g/h"  Monitor
+
+BO_ 2565874493 SLAVE_Doser2: 8 ECU
+ SG_ DCU_Integral : 24|16@1+ (1,0) [0.0|65535.0] ""  Monitor
+ SG_ System_Status : 16|8@1+ (1,0) [0.0|16.0] ""  Monitor
+ SG_ QDEF : 0|16@1+ (0.3,0.0) [0.0|2000000.0] "g/h"  Monitor
+
+BO_ 2566869821 Vehicle_PARA1: 8 ECU
+ SG_ Qexh : 48|16@1+ (0.2,0.0) [0.0|1000.0] "kg/h"  Monitor
+ SG_ Oil_T : 40|8@1- (1,0) [-128.0|128.0] ""  Monitor
+ SG_ Fuel_T : 32|8@1- (1,0) [-128.0|128.0] ""  Monitor
+ SG_ AMT : 24|8@1- (1,0) [-128.0|128.0] ""  Monitor
+ SG_ BaroPre : 16|8@1+ (0.5,0.0) [0.0|128.0] ""  Monitor
+ SG_ Fuel : 8|8@1+ (0.125,0.0) [0.0|100.0] ""  Monitor
+ SG_ APP_R : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
+
+BO_ 2566870077 Vehicle_PARA2: 8 ECU
+ SG_ Total_Vehicle_Distance : 32|32@1+ (0.125,0.0) [0.0|1000000.0] ""  Monitor
+ SG_ Trip_Distance : 0|32@1+ (0.125,0.0) [0.0|1000000.0] ""  Monitor
+
+BO_ 2566870333 Vehicle_PARA3: 8 ECU
+ SG_ Cool_Temp : 16|8@1- (1,0) [-40.0|120.0] ""  Monitor
+
+BO_ 2566870845 Vehicle_PARA4: 8 ECU
+ SG_ SCR_EGTD : 48|16@1- (1,0) [-273.0|1000.0] ""  Monitor
+ SG_ SCR_EGTU : 32|16@1- (1,0) [-273.0|1000.0] ""  Monitor
+ SG_ DPF_EGTU : 16|16@1- (1,0) [-273.0|1000.0] ""  Monitor
+ SG_ DOC_EGTU : 0|16@1- (1,0) [-273.0|1000.0] ""  Monitor
+
+BO_ 2566871101 Vehicle_PARA5: 8 ECU
+ SG_ SCR_THAWING : 56|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ ECU_TIMEOUT : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ NOX2_TIMEOUT : 40|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ NOX1_TIMEOUT : 32|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ T3_EOBD_SUPPLY_ST : 16|16@1+ (1,0) [0.0|500.0] ""  Monitor
+ SG_ T3_EOBD_DOSER_ST : 0|16@1+ (1,0) [0.0|500.0] ""  Monitor
+
+BO_ 2566871357 Vehicle_PARA6: 8 ECU
+ SG_ t_COOLV_CloseErr : 48|16@1+ (1,0) [0.0|65535.0] ""  Monitor
+ SG_ t_COOLV_OpenErr : 32|16@1+ (1,0) [0.0|65535.0] ""  Monitor
+ SG_ SV_2 : 16|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SV_1 : 0|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+
+BO_ 2566873149 Vehicle_PARA7: 8 ECU
+ SG_ Thawing_State : 32|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ CWV_OPEN_TIME : 16|16@1+ (1,0) [0.0|65535.0] ""  Monitor
+ SG_ HEAT_SATE : 8|8@1+ (1,0) [0.0|5.0] ""  Monitor
+ SG_ CWV_STATE : 0|8@1+ (1,0) [0.0|5.0] ""  Monitor
+
+BO_ 2566873405 PARA8_MASTER: 8 ECU
+ SG_ st_DTC : 48|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ ACT_sta : 0|8@1+ (1,0) [0.0|256.0] ""  Monitor
+
+BO_ 2566870589 FAI_DTC: 8 ECU
+ SG_ DTC_7 : 56|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_6 : 48|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_5 : 40|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_4 : 32|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_3 : 24|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_2 : 16|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_1 : 8|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_0 : 0|8@1+ (1,0) [0.0|10.0] ""  Monitor
+
+BO_ 2566867517 WORK1_DOSER: 8 ECU
+ SG_ EFI_PRESS : 48|16@1+ (1,0) [0.0|1000.0] "KPa"  Monitor
+ SG_ prd_doser : 24|24@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ fre_doser : 16|8@1+ (1,0) [0.0|150.0] "Hz"  Monitor
+ SG_ DOSER_State : 8|8@1+ (1.0,0.0) [0.0|10.0] ""  Monitor
+ SG_ DCU_MODE : 0|8@1+ (1.0,0.0) [0.0|100.0] ""  Monitor
+
+BO_ 2566867773 WORK2_DOSER: 8 ECU
+ SG_ T3_EOBD_doser : 48|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ Pumpstate_doser : 40|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ WORK2_DOSER_fre_doser : 32|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ T3_doser : 16|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ T1_doser : 0|16@1+ (1,0) [0.0|2500.0] ""  Monitor
+
+BO_ 2566868541 SENSOR1: 8 ECU
+ SG_ CDEF : 48|16@1+ (0.25,0.0) [0.0|100.0] "%"  Monitor
+ SG_ LDEF : 32|8@1+ (0.4,0.0) [0.0|100.0] "%"  Monitor
+ SG_ TDEF : 16|8@1+ (1,-40) [-40.0|100.0] "℃"  Monitor
+ SG_ Vbat_V : 8|8@1+ (0.15,-0.02) [0.0|50.0] ""  Monitor
+ SG_ Vbat_AD : 0|8@1+ (1,0) [0.0|255.0] ""  Monitor
+
+BO_ 2566868797 SENSOR2: 8 ECU
+ SG_ PRESS_Value : 16|16@1+ (1,0) [50.0|900.0] "kpa"  Monitor
+ SG_ PRESS_AD : 0|16@1+ (1,0) [0.0|255.0] ""  Monitor
+
+BO_ 2566873661 SENSOR4: 8 ECU
+ SG_ NOxU : 40|16@1+ (1,0) [0.0|2000.0] "ppm"  Monitor
+ SG_ NOxD : 24|16@1+ (1,0) [0.0|2000.0] "ppm"  Monitor
+
+BO_ 2565869137 NOX_U: 8 ECU
+ SG_ NOx_u : 0|16@1+ (0.05,-200.0) [0.0|2000.0] "ppm"  Monitor
+
+BO_ 2565869394 NOX_D: 8 ECU
+ SG_ NOx_d : 0|16@1+ (0.05,-200.0) [0.0|2000.0] "ppm"  Monitor
+
+BO_ 2566874429 RUNTIME_1: 8 ECU
+ SG_ OBD_C : 40|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ WUC : 24|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ DC : 0|24@1+ (1,0) [0.0|10000.0] ""  Monitor
+
+BO_ 2566874685 RUNTIME_2: 8 ECU
+ SG_ KEYON_S : 32|32@1+ (1,0) [0.0|100000.0] ""  Monitor
+ SG_ ENG_RT_S : 0|32@1+ (1,0) [0.0|100000.0] ""  Monitor
+
+BO_ 2566874941 RUNTIME_3: 8 ECU
+ SG_ nb_Supplier : 32|32@1+ (1,0) [0.0|100000.0] ""  Monitor
+ SG_ nb_DOSER : 0|32@1+ (1,0) [0.0|100000.0] ""  Monitor
+
+BO_ 2566864957 CAL1: 8 ECU
+ SG_ SCRT_tCatDs : 48|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_tCatUs : 32|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_dmEG : 16|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_cEG : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
+
+BO_ 2566865213 CAL2: 8 ECU
+ SG_ SCRT_rHeatCat2Env : 48|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_drHeatCat2Env : 32|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_tDiffCatNorm2Env : 16|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_kCatNorm2Ds : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
+
+BO_ 2566865725 CAL3: 8 ECU
+ SG_ SCRT_dqCat2Env : 48|16@1- (1,0) [0.0|10000.0] ""  Monitor
+ SG_ SCRT_dqEG2Cat : 32|16@1- (1,0) [0.0|10000.0] ""  Monitor
+ SG_ SCRT_tCatDsBackup : 16|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_tDiffCatUs2Ds : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
+
+BO_ 2566865981 CAL4: 8 ECU
+ SG_ SCRT_tCatNorm : 48|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_dtCatNorm : 32|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ SCRT_rHeatCat : 16|16@1- (1,0) [0.0|2000.0] ""  Monitor
+ SG_ SCRT_dqCat : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
+
+BO_ 2566866237 CAL5: 8 ECU
+ SG_ SUP_PRE : 32|32@1+ (1,0) [0.0|10000.0] ""  Monitor
+ SG_ INJ_PRE : 0|32@1+ (1,0) [0.0|10000.0] ""  Monitor
+
+BO_ 2566866493 CAL6: 8 ECU
+ SG_ HT2_AD : 56|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ HT1_AD : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ ISV_AD : 40|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ CVV_AD : 32|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ SUP_B_AD : 24|8@1+ (1,0) [0.0|50.0] ""  Monitor
+ SG_ SUP_F_AD : 16|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ INJ_B_AD : 8|8@1+ (1,0) [0.0|50.0] ""  Monitor
+ SG_ INJ_F_AD : 0|8@1+ (1,0) [0.0|10.0] ""  Monitor
+
+BO_ 2566866749 CAL7: 8 ECU
+ SG_ M_AD : 48|16@1+ (1,0) [0.0|1023.0] ""  Monitor
+ SG_ F_AD : 32|16@1+ (1,0) [0.0|1023.0] ""  Monitor
+ SG_ EGTD_AD : 16|16@1+ (1,0) [0.0|1023.0] ""  Monitor
+ SG_ EGTU_AD : 0|16@1+ (1,0) [0.0|1023.0] ""  Monitor
+
+BO_ 2566867005 CAL8: 8 ECU
+ SG_ nb_T3U_supplier : 56|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ nb_T3U_doser : 48|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ nb_T3L_supplier : 40|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ nb_T3L_doser : 32|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ nb_T3L_50doser : 24|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ v_cal_pump_err : 16|8@1+ (1,0) [0.0|100.0] ""  Monitor
+
+BO_ 2566867261 CAL9: 8 ECU
+ SG_ Pumpstate_supplier : 56|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ T3_EOBD_supplier : 40|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ T3_supplier : 24|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ fre_supplier : 16|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ T1_supplier : 0|16@1+ (1,0) [0.0|2000.0] ""  Monitor
+
+BO_ 2566805155 UQS1: 8 ECU
+ SG_ L_PRESS : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ L_TDEF : 8|8@1+ (1,-40) [-40.0|80.0] ""  Monitor
+ SG_ L_LDEF : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
+
+BO_ 2566757283 UQS2: 8 ECU
+ SG_ C_CAL2 : 56|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ C_CAL1 : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ C_CDEF : 8|8@1+ (0.25,0.0) [0.0|65.0] ""  Monitor
+ SG_ C_TDEF : 0|8@1+ (1,-40) [-40.0|80.0] ""  Monitor
+
+BO_ 2566804992 UQS3: 8 ECU
+ SG_ L_ETDEF : 8|8@1+ (1,-40) [-40.0|80.0] ""  Monitor
+ SG_ L_ELDEF : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
+
+BO_ 2566805053 UQS4: 8 ECU
+ SG_ L_DTDEF : 8|8@1+ (1,-40) [-40.0|80.0] ""  Monitor
+ SG_ L_DLDEF : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
+
+
+
+
+CM_ BO_ 2566869309 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566869309 QinjLperH "Original: QinjLperH; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机燃油消耗率";
+CM_ SG_ 2566869309 Vspeed "Original: Vspeed(km/h); bytes=4; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 车速";
+CM_ SG_ 2566869309 ENGINE_n "Original: n(%); bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机转速百分比";
+CM_ SG_ 2566869309 Torque "Original: Torque(%); bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机扭矩百分比";
+CM_ SG_ 2566869309 N "Original: N(r/min); bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机转速";
+CM_ BO_ 2364539904 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2364539904 Torque_b "Original: Torque(%)_b; bytes=2; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. BOSCH_ECU发动机扭矩百分比";
+CM_ BO_ 2565874688 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2565874688 FCC_STATE "Original: FCC_STATE; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. FCC状态";
+CM_ SG_ 2565874688 FCC_DTC "Original: FCC_DTC; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. bit0FCC故障 bit1泵驱动开短路 bit2泵加热开短路 bit3喷嘴开短路";
+CM_ SG_ 2565874688 FCC_Integral "Original: FCC_Integral; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 当前DC中的需求的喷射量积分";
+CM_ SG_ 2565874688 DEF "Original: DEF(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. DEF喷射量(ECU设定)";
+CM_ BO_ 2364548096 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2364548096 DEF2 "Original: DEF2(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. DEF喷射量(ECU设定)";
+CM_ BO_ 2565874493 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2565874493 DCU_Integral "Original: DCU_Integral; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 实际喷射量积分值";
+CM_ SG_ 2565874493 System_Status "Original: System_Status; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 喷射系统状态";
+CM_ SG_ 2565874493 QDEF "Original: QDEF(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. QDEF喷射量(实际)";
+CM_ BO_ 2566869821 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566869821 Qexh "Original: Qexh(kg/h); bytes=67; type=word; y=x*0.2. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量";
+CM_ SG_ 2566869821 Oil_T "Original: Oil_T; bytes=5; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 机油温度";
+CM_ SG_ 2566869821 Fuel_T "Original: Fuel_T; bytes=4; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 燃油温度";
+CM_ SG_ 2566869821 AMT "Original: AMT; bytes=3; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 环境温度";
+CM_ SG_ 2566869821 BaroPre "Original: BaroPre; bytes=2; type=byte; y=x*0.5. ASSUMED Intel byte order; byte-list length takes precedence. 大气压力";
+CM_ SG_ 2566869821 Fuel "Original: Fuel; bytes=1; type=byte; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 瞬时燃油消耗率";
+CM_ SG_ 2566869821 APP_R "Original: APP_R; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 加速踏板位置";
+CM_ BO_ 2566870077 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566870077 Total_Vehicle_Distance "Original: Total_Vehicle_Distance; bytes=4567; type=dword; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 车辆累计行驶距离";
+CM_ SG_ 2566870077 Trip_Distance "Original: Trip_Distance; bytes=0123; type=dword; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 本次运行行驶距离";
+CM_ BO_ 2566870333 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566870333 Cool_Temp "Original: Cool_Temp; bytes=2; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 冷却水温";
+CM_ BO_ 2566870845 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566870845 SCR_EGTD "Original: SCR_EGTD; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. SCR出口温度";
+CM_ SG_ 2566870845 SCR_EGTU "Original: SCR_EGTU; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. SCR入口温度";
+CM_ SG_ 2566870845 DPF_EGTU "Original: DPF_EGTU; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DPF入口温度";
+CM_ SG_ 2566870845 DOC_EGTU "Original: DOC_EGTU; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DOC入口温度";
+CM_ BO_ 2566871101 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566871101 SCR_THAWING "Original: SCR_THAWING; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 解冻状态0非低温,1低温";
+CM_ SG_ 2566871101 ECU_TIMEOUT "Original: ECU_TIMEOUT; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ECU超时";
+CM_ SG_ 2566871101 NOX2_TIMEOUT "Original: NOX2_TIMEOUT; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX2超时";
+CM_ SG_ 2566871101 NOX1_TIMEOUT "Original: NOX1_TIMEOUT; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX1超时";
+CM_ SG_ 2566871101 T3_EOBD_SUPPLY_ST "Original: T3_EOBD_SUPPLY_ST; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. T3_EOBD_SUPPLY_ST";
+CM_ SG_ 2566871101 T3_EOBD_DOSER_ST "Original: T3_EOBD_DOSER_ST; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. T3_EOBD_DOSER_ST";
+CM_ BO_ 2566871357 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566871357 t_COOLV_CloseErr "Original: t_COOLV_CloseErr; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水电磁阀故障关闭时间";
+CM_ SG_ 2566871357 t_COOLV_OpenErr "Original: t_COOLV_OpenErr; bytes=45; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水电磁阀故障开启时间";
+CM_ SG_ 2566871357 SV_2 "Original: SV_2; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量2";
+CM_ SG_ 2566871357 SV_1 "Original: SV_1; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量1";
+CM_ BO_ 2566873149 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566873149 Thawing_State "Original: Thawing_State; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 解冻状态";
+CM_ SG_ 2566873149 CWV_OPEN_TIME "Original: CWV_OPEN_TIME; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀开启时间 秒";
+CM_ SG_ 2566873149 HEAT_SATE "Original: HEAT_SATE; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管开启状态0关闭1开启";
+CM_ SG_ 2566873149 CWV_STATE "Original: CWV_STATE; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀开启状态0关闭1开启";
+CM_ BO_ 2566873405 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566873405 st_DTC "Original: st_DTC; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DTC状态0当前故障1判定故障2确定故障3历史故障4永久故障";
+CM_ SG_ 2566873405 ACT_sta "Original: ACT_sta; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 执行器状态";
+CM_ BO_ 2566870589 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566870589 DTC_7 "Original: DTC_7; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_6 "Original: DTC_6; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_5 "Original: DTC_5; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_4 "Original: DTC_4; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_3 "Original: DTC_3; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_2 "Original: DTC_2; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_1 "Original: DTC_1; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ SG_ 2566870589 DTC_0 "Original: DTC_0; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
+CM_ BO_ 2566867517 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566867517 EFI_PRESS "Original: EFI_PRESS(KPa); bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管道压力";
+CM_ SG_ 2566867517 prd_doser "Original: prd_doser; bytes=345; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵的工作周期";
+CM_ SG_ 2566867517 fre_doser "Original: fre_doser(Hz); bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵的频率";
+CM_ SG_ 2566867517 DOSER_State "Original: DOSER_State; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 泵状态
+0:INI，初始化
+1:PUMP_OFF，泵停止
+2:PRIMING，填充
+3:DOSING，喷射
+4:PURGING，清扫
+5:DIAG，诊断";
+CM_ SG_ 2566867517 DCU_MODE "Original: DCU_MODE; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DCU工作模式
+0:QTEST
+1:SLAVE
+2:VMASTER
+3:MASTER";
+CM_ BO_ 2566867773 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566867773 T3_EOBD_doser "Original: T3_EOBD_doser; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3_EOBD";
+CM_ SG_ 2566867773 Pumpstate_doser "Original: Pumpstate_doser; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵当前状态";
+CM_ SG_ 2566867773 WORK2_DOSER_fre_doser "Original: fre_doser; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵频率";
+CM_ SG_ 2566867773 T3_doser "Original: T3_doser; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3";
+CM_ SG_ 2566867773 T1_doser "Original: T1_doser; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T1";
+CM_ BO_ 2566868541 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566868541 CDEF "Original: CDEF(%); bytes=6; type=word; y=x*0.25. ASSUMED Intel byte order; byte-list length takes precedence. 尿素浓度百分比";
+CM_ SG_ 2566868541 LDEF "Original: LDEF(%); bytes=4; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
+CM_ SG_ 2566868541 TDEF "Original: TDEF(℃); bytes=2; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素温度";
+CM_ SG_ 2566868541 Vbat_V "Original: Vbat_V; bytes=1; type=byte; y=x*0.15-0.02. ASSUMED Intel byte order; byte-list length takes precedence. 电压";
+CM_ SG_ 2566868541 Vbat_AD "Original: Vbat_AD; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 电压采样";
+CM_ BO_ 2566868797 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566868797 PRESS_Value "Original: PRESS_Value(kpa); bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管路压力值";
+CM_ SG_ 2566868797 PRESS_AD "Original: PRESS_AD; bytes=0; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管路压力值采样";
+CM_ BO_ 2566873661 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566873661 NOxU "Original: NOxU(ppm); bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX浓度上游";
+CM_ SG_ 2566873661 NOxD "Original: NOxD(ppm); bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX浓度下游";
+CM_ BO_ 2565869137 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2565869137 NOx_u "Original: NOx_u(ppm); bytes=01; type=dword; y=x*0.05-200. ASSUMED Intel byte order; byte-list length takes precedence. 上游NOX浓度";
+CM_ BO_ 2565869394 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2565869394 NOx_d "Original: NOx_d(ppm); bytes=01; type=dword; y=x*0.05-200. ASSUMED Intel byte order; byte-list length takes precedence. 下游NOX浓度";
+CM_ BO_ 2566874429 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566874429 OBD_C "Original: OBD_C; bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. OBD循环数";
+CM_ SG_ 2566874429 WUC "Original: WUC; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 暖机循环数";
+CM_ SG_ 2566874429 DC "Original: DC; bytes=012; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 驾驶循环数";
+CM_ BO_ 2566874685 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566874685 KEYON_S "Original: KEYON_S; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 钥匙累计开启时间";
+CM_ SG_ 2566874685 ENG_RT_S "Original: ENG_RT_S; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机累计运行时间";
+CM_ BO_ 2566874941 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566874941 nb_Supplier "Original: nb_Supplier; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵动作次数";
+CM_ SG_ 2566874941 nb_DOSER "Original: nb_DOSER; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵动作次数";
+CM_ BO_ 2566864957 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566864957 SCRT_tCatDs "Original: SCRT_tCatDs; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器下游温度";
+CM_ SG_ 2566864957 SCRT_tCatUs "Original: SCRT_tCatUs; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器上游温度";
+CM_ SG_ 2566864957 SCRT_dmEG "Original: SCRT_dmEG; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气流量kg/s";
+CM_ SG_ 2566864957 SCRT_cEG "Original: SCRT_cEG; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气比热容";
+CM_ BO_ 2566865213 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566865213 SCRT_rHeatCat2Env "Original: SCRT_rHeatCat2Env; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热热阻";
+CM_ SG_ 2566865213 SCRT_drHeatCat2Env "Original: SCRT_drHeatCat2Env; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热热阻率";
+CM_ SG_ 2566865213 SCRT_tDiffCatNorm2Env "Original: SCRT_tDiffCatNorm2Env; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度与环境温度差值";
+CM_ SG_ 2566865213 SCRT_kCatNorm2Ds "Original: SCRT_kCatNorm2Ds; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度与下游温度转换系数";
+CM_ BO_ 2566865725 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566865725 SCRT_dqCat2Env "Original: SCRT_dqCat2Env; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热量";
+CM_ SG_ 2566865725 SCRT_dqEG2Cat "Original: SCRT_dqEG2Cat; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气向催化器输入热量";
+CM_ SG_ 2566865725 SCRT_tCatDsBackup "Original: SCRT_tCatDsBackup; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器下游温度备份值";
+CM_ SG_ 2566865725 SCRT_tDiffCatUs2Ds "Original: SCRT_tDiffCatUs2Ds; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器上下游温度差";
+CM_ BO_ 2566865981 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566865981 SCRT_tCatNorm "Original: SCRT_tCatNorm; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度";
+CM_ SG_ 2566865981 SCRT_dtCatNorm "Original: SCRT_dtCatNorm; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度改变量(每个DCU运算间隔)";
+CM_ SG_ 2566865981 SCRT_rHeatCat "Original: SCRT_rHeatCat; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器热惯量";
+CM_ SG_ 2566865981 SCRT_dqCat "Original: SCRT_dqCat; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器热量变化值";
+CM_ BO_ 2566866237 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566866237 SUP_PRE "Original: SUP_PRE; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵工作周期";
+CM_ SG_ 2566866237 INJ_PRE "Original: INJ_PRE; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 喷嘴工作周期";
+CM_ BO_ 2566866493 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566866493 HT2_AD "Original: HT2_AD; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管2短路采样AD";
+CM_ SG_ 2566866493 HT1_AD "Original: HT1_AD; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管1短路采样AD";
+CM_ SG_ 2566866493 ISV_AD "Original: ISV_AD; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 空气阀短路采样AD";
+CM_ SG_ 2566866493 CVV_AD "Original: CVV_AD; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀短路采样AD";
+CM_ SG_ 2566866493 SUP_B_AD "Original: SUP_B_AD; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵短路采样AD2";
+CM_ SG_ 2566866493 SUP_F_AD "Original: SUP_F_AD; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵短路采样AD1";
+CM_ SG_ 2566866493 INJ_B_AD "Original: INJ_B_AD; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵短路采样AD2";
+CM_ SG_ 2566866493 INJ_F_AD "Original: INJ_F_AD; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵短路采样AD1";
+CM_ BO_ 2566866749 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566866749 M_AD "Original: M_AD; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 主继电器开路采样值";
+CM_ SG_ 2566866749 F_AD "Original: F_AD; bytes=45; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 副继电器开路采样值";
+CM_ SG_ 2566866749 EGTD_AD "Original: EGTD_AD; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 下游排温AD值";
+CM_ SG_ 2566866749 EGTU_AD "Original: EGTU_AD; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 上游排温AD值";
+CM_ BO_ 2566867005 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566867005 nb_T3U_supplier "Original: nb_T3U_supplier; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3超上限的次数";
+CM_ SG_ 2566867005 nb_T3U_doser "Original: nb_T3U_doser; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3超上限的次数";
+CM_ SG_ 2566867005 nb_T3L_supplier "Original: nb_T3L_supplier; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3超下限的次数";
+CM_ SG_ 2566867005 nb_T3L_doser "Original: nb_T3L_doser; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3超下限的次数";
+CM_ SG_ 2566867005 nb_T3L_50doser "Original: nb_T3L_50doser; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵偏差50%超下限的次数";
+CM_ SG_ 2566867005 v_cal_pump_err "Original: v_cal_pump_err; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 故障状态";
+CM_ BO_ 2566867261 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566867261 Pumpstate_supplier "Original: Pumpstate_supplier; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵当前状态/0正常动作/2诊断管路是否异常/3扫描模式/4解冻模式/5泵油动作，发现空泵之后，适时的进行泵油，以保证有液体之后，可以顺利填充";
+CM_ SG_ 2566867261 T3_EOBD_supplier "Original: T3_EOBD_supplier; bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3_EOBD";
+CM_ SG_ 2566867261 T3_supplier "Original: T3_supplier; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3";
+CM_ SG_ 2566867261 fre_supplier "Original: fre_supplier; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵频率";
+CM_ SG_ 2566867261 T1_supplier "Original: T1_supplier; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T1";
+CM_ BO_ 2566805155 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566805155 L_PRESS "Original: L_PRESS; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力AD采样";
+CM_ SG_ 2566805155 L_TDEF "Original: L_TDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
+CM_ SG_ 2566805155 L_LDEF "Original: L_LDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
+CM_ BO_ 2566757283 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566757283 C_CAL2 "Original: C_CAL2; bytes=7; type=inferred; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力标定值2";
+CM_ SG_ 2566757283 C_CAL1 "Original: C_CAL1; bytes=6; type=inferred; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力标定值1";
+CM_ SG_ 2566757283 C_CDEF "Original: C_CDEF; bytes=1; type=byte; y=x*0.25. ASSUMED Intel byte order; byte-list length takes precedence. 尿素浓度";
+CM_ SG_ 2566757283 C_TDEF "Original: C_TDEF; bytes=0; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 品质传感器温度值";
+CM_ BO_ 2566804992 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566804992 L_ETDEF "Original: L_ETDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
+CM_ SG_ 2566804992 L_ELDEF "Original: L_ELDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
+CM_ BO_ 2566805053 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ SG_ 2566805053 L_DTDEF "Original: L_DTDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
+CM_ SG_ 2566805053 L_DLDEF "Original: L_DLDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
+
+
+
+VAL_ 2566867517 DOSER_State 0 "INI，初始化" 1 "PUMP_OFF，泵停止" 2 "PRIMING，填充" 3 "DOSING，喷射" 4 "PURGING，清扫" 5 "DIAG，诊断" ;
+VAL_ 2566867517 DCU_MODE 0 "QTEST" 1 "SLAVE" 2 "VMASTER" 3 "MASTER" ;
+
+
+

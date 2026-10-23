@@ -1,7 +1,8 @@
 """验证 WLTC CSV 数据质量。"""
 import csv
+from pathlib import Path
 
-path = "wltc_diesel_1800s.csv"
+path = Path(__file__).resolve().parent / "wltc_diesel_1800s.csv"
 with open(path, encoding="utf-8-sig") as f:
     rows = list(csv.DictReader(f))
 

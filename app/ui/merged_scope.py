@@ -114,8 +114,13 @@ class MergedScope(SignalScope):
                 labels.append((label,text,self.COLORS[i%len(self.COLORS)]))
             painter.setPen(QColor('#687568'))
             for j in range(5):
-                text = f'{-self.WINDOW_SECONDS+self.WINDOW_SECONDS*j/4:g}'
-                label_rect = QRectF(plot.left()+plot.width()*j/4-22,plot.bottom()+4,44,18)
+                text = self._time_tick_text(-self.WINDOW_SECONDS+self.WINDOW_SECONDS*j/4, j in (0,4))
+                label_width = max(44,painter.fontMetrics().horizontalAdvance(text)+8)
+                label_rect = QRectF(plot.left()+plot.width()*j/4-label_width/2,plot.bottom()+4,label_width,18)
+                if j == 0:
+                    label_rect.moveLeft(plot.left())
+                elif j == 4:
+                    label_rect.moveRight(plot.right())
                 if j == 0 and not self._time_editor.isHidden() and label_rect.intersects(QRectF(self._time_editor.geometry())):
                     continue
                 painter.drawText(label_rect,Qt.AlignCenter,text)

@@ -144,6 +144,7 @@ class MainWindow(QMainWindow):
         self.list_panel.start_tasks.connect(self._on_start_tasks)
         self.list_panel.start_sequence.connect(self._on_start_sequence)
         self.list_panel.stop_tasks.connect(self._on_stop_tasks)
+        self.list_panel.selection_changed.connect(self._on_list_selection_changed)
         self.list_panel.message.connect(self._show_message)
         self.list_panel.model.parse_error.connect(self._show_message)
 
@@ -305,6 +306,18 @@ class MainWindow(QMainWindow):
         self._worker.stop_sequence()
         for uid in uids:
             self._worker.stop_periodic(uid)
+
+    def _on_list_selection_changed(self, tasks, sequential: bool) -> None:
+        if self._worker is None:
+            return
+        if sequential:
+            self._worker.update_sequence_entries(tasks)
+            return
+        for uid, frame, period, repeat, enabled in tasks:
+            if enabled:
+                self._worker.start_periodic(uid, frame, max(1, period), repeat)
+            else:
+                self._worker.stop_periodic(uid)
 
     def _on_start_sequence(self, tasks: list[tuple], repeats: int,
                            interval_ms: int, cycle_interval_ms: int) -> None:

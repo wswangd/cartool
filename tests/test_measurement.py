@@ -161,6 +161,9 @@ class MeasurementTests(unittest.TestCase):
         card.expand_button.click()
         card._set_time_max(20)
         scope = card.scope
+        self.assertEqual(scope._time_tick_text(-20, True), "-20 s")
+        self.assertEqual(scope._time_tick_text(0, True), "0 s")
+        self.assertEqual(scope._time_tick_text(-10), "-10")
         scope._view_time = None
         scope.append(100, 10)
         scope.append(105, 20)
@@ -568,6 +571,27 @@ class MeasurementTests(unittest.TestCase):
         card.expand_button.click()
         self.application.processEvents()
         self.assertEqual(card.height(), 80)
+
+    def test_small_waveforms_stay_inside_card_border(self):
+        from PySide6.QtCore import QSize
+
+        self.load()
+        self.panel.resize(1200, 700)
+        self.panel.show()
+        card = self.card()
+        card.expand_button.click()
+        for width in (350, 260, 220):
+            card.apply_size(QSize(width, 160))
+            self.application.processEvents()
+            card._layout.activate()
+            self.assertTrue(card.rect().adjusted(3, 3, -3, -3).contains(card.scope.geometry()),
+                            (card.size(), card.scope.geometry()))
+        self.panel._merge_signals(((256, False), "Temp"), ((256, False), "Speed"))
+        card.apply_size(QSize(220, 160))
+        self.application.processEvents()
+        card._layout.activate()
+        self.assertTrue(card.rect().adjusted(3, 3, -3, -3).contains(card._merged_plot.geometry()),
+                        (card.size(), card._merged_plot.geometry()))
 
     def test_name_restores_after_resize_and_value_updates(self):
         from app.ui.measurement_card import MeasurementCard

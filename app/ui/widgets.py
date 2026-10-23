@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, Qt, QTimer
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer
 from PySide6.QtGui import QPainter
-from PySide6.QtWidgets import QApplication, QComboBox, QPushButton, QSplitter, QSplitterHandle, QStyle, QStyledItemDelegate, QStyleOptionViewItem
+from PySide6.QtWidgets import QApplication, QComboBox, QPushButton, QScrollBar, QSplitter, QSplitterHandle, QStyle, QStyledItemDelegate, QStyleOptionViewItem
+
+
+class VerticalScrollBarMenuFilter(QObject):
+    def eventFilter(self, watched, event):
+        if (event.type() == QEvent.ContextMenu
+                and isinstance(watched, QScrollBar)
+                and watched.orientation() == Qt.Vertical):
+            event.accept()
+            return True
+        return super().eventFilter(watched, event)
 
 
 class CenteredCheckDelegate(QStyledItemDelegate):

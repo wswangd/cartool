@@ -109,6 +109,17 @@ class BusWorker(QThread):
         with self._lock:
             self._sequence = None
 
+    def update_sequence_entries(self, tasks) -> None:
+        with self._lock:
+            sequence = self._sequence
+            if sequence is None:
+                return
+            upcoming = [entry[0] for entry in sequence.entries[sequence.index:]]
+            sequence.entries = [(uid, frame.copy(), max(1, int(period)))
+                                for uid, frame, period, *_ in tasks]
+            positions = {entry[0]: index for index, entry in enumerate(sequence.entries)}
+            sequence.index = next((positions[uid] for uid in upcoming if uid in positions), 0)
+
     def active_uids(self) -> list[int]:
         with self._lock:
             return list(self._periodic)
@@ -148,6 +159,8 @@ class BusWorker(QThread):
         with self._lock:
             task = self._sequence
             if task is None:
+                return True
+            if not task.entries:
                 return True
             if now < task.next_due:
                 return False

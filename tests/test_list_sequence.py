@@ -48,6 +48,19 @@ class ListSequenceTests(unittest.TestCase):
         self.worker._run_sequence(float('inf'))
         self.assertEqual(self.bus.receive(), [])
 
+    def test_live_sequence_selection_preserves_next_and_pauses_when_empty(self):
+        self.worker.start_sequence(self.tasks)
+        self.worker._run_sequence(float('inf'))
+        self.worker.update_sequence_entries(self.tasks[1:])
+        self.worker._run_sequence(float('inf'))
+        self.assertEqual([frame.frame_id for frame, _, _ in self.bus.receive()], [256, 257])
+        self.worker.update_sequence_entries([])
+        self.worker._run_sequence(float('inf'))
+        self.assertEqual(self.bus.receive(), [])
+        self.worker.update_sequence_entries(self.tasks)
+        self.worker._run_sequence(float('inf'))
+        self.assertEqual(self.bus.receive()[0][0].frame_id, 256)
+
     def test_panel_modes_and_state(self):
         panel = ListPanel()
         panel.add_frame(self.tasks[0][1], period_ms=10)
