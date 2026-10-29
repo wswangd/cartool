@@ -77,6 +77,8 @@ class TracePanel(QWidget):
         toolbar.addWidget(self.info_label)
 
         self.table = QTableView()
+        self.table.setStyleSheet(
+            "QTableView::item:selected { color: white; background-color: palette(highlight); }")
         self.table.setModel(self.model)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setAlternatingRowColors(True)
@@ -95,7 +97,7 @@ class TracePanel(QWidget):
             header.resizeSection(column, width)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 6, 0, 0)
         layout.addLayout(toolbar)
         layout.addWidget(self.table)
 

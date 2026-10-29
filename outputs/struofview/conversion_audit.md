@@ -1,5 +1,10 @@
 # STRUOFVIEW → DBC conversion audit
 
+Historical audit of the original 37-message draft. On 2026-10-28 the main DBC was
+updated against `scr_frame.c::frame_disparameter()`. See `frame_disparameter_修订说明.md`
+for the current layout and checks; the original draft is preserved as
+`STRUOFVIEW_2022-10-26_ENGINE_DRAFT.before_frame_disparameter.dbc`.
+
 Source: E:\实验室测试\FAI\STRUOFVIEW\STRUOFVIEW 2022-10-26-1.txt
 Start marker: `SUBJECT ENGINE 18FF513D;`
 Messages: 37

@@ -1,5 +1,9 @@
 # STRUOFVIEW DBC 草稿自测结果
 
+本记录仅对应原始37报文草稿（现已另存为 `.before_frame_disparameter.dbc` 备份）。
+主DBC于2026-10-28按源码更新；当前验证结果见 `frame_disparameter_修订说明.md`，
+本页的CANdb++检查结果不代表修订版已重新执行CANdb++检查。
+
 ## 文件
 
 - 输入：`E:\实验室测试\FAI\STRUOFVIEW\STRUOFVIEW 2022-10-26-1.txt`

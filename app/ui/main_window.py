@@ -21,6 +21,7 @@ from .send_panel import SendPanel
 from .signal_panel import SignalPanel
 from .simulate_panel import SimulatePanel
 from .trace_panel import TracePanel
+from .tab_workspace import TabWorkspace
 
 APP_TITLE = "CANTool — 自定义报文发送工具"
 SINGLE_SEND_UID = 0
@@ -28,6 +29,10 @@ SIGNAL_UID_BASE = 1_000_000
 
 
 class MainWindow(QMainWindow):
+    @property
+    def tabs(self):
+        return self.tab_workspace.primary
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(APP_TITLE)
@@ -83,7 +88,7 @@ class MainWindow(QMainWindow):
         self._send_splitter.setCollapsible(0, True)
         self._send_splitter.setCollapsible(1, True)
 
-        self.tabs = QTabWidget()
+        self.tab_workspace = TabWorkspace()
         self.tabs.addTab(self._send_splitter, "报文发送")
         self.tabs.addTab(self.signal_panel, "信号发送")
         self.tabs.addTab(self.simulate_panel, "数据模拟")
@@ -91,24 +96,18 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.measurement_panel, "信号测量")
 
         self.trace_panel = TracePanel()
-        trace_group = QGroupBox("报文显示")
-        trace_group.setMinimumHeight(32)
-        trace_layout = QVBoxLayout(trace_group)
-        trace_layout.addWidget(self.trace_panel)
+        self.tabs.addTab(self.trace_panel, "报文显示")
 
         self._main_splitter = HoverSplitter(Qt.Vertical)
         self._main_splitter.addWidget(self.device_panel)
-        self._main_splitter.addWidget(self.tabs)
-        self._main_splitter.addWidget(trace_group)
+        self._main_splitter.addWidget(self.tab_workspace)
         self._main_splitter.setStretchFactor(0, 0)
         self._main_splitter.setStretchFactor(1, 3)
-        self._main_splitter.setStretchFactor(2, 2)
         self.tabs.setMinimumHeight(32)
         self._main_splitter.setHandleWidth(7)
         self._send_splitter.setHandleWidth(7)
         self._main_splitter.setCollapsible(0, True)
         self._main_splitter.setCollapsible(1, True)
-        self._main_splitter.setCollapsible(2, True)
 
         central = QWidget()
         layout = QVBoxLayout(central)
@@ -503,7 +502,7 @@ class MainWindow(QMainWindow):
         send_splitter_state = settings.get("send_splitter")
         if isinstance(send_splitter_state, str):
             self._send_splitter.restoreState(QByteArray.fromBase64(send_splitter_state.encode("ascii")))
-        main_splitter_state = settings.get("main_splitter")
+        main_splitter_state = settings.get("main_splitter_tabs")
         if isinstance(main_splitter_state, str):
             self._main_splitter.restoreState(QByteArray.fromBase64(main_splitter_state.encode("ascii")))
         geometry = settings.get("geometry")
@@ -536,7 +535,7 @@ class MainWindow(QMainWindow):
             "signal_card_layout": self.signal_panel.card_layout_settings(),
             "list_header": bytes(self.list_panel.table.horizontalHeader().saveState().toBase64()).decode("ascii"),
             "send_splitter": bytes(self._send_splitter.saveState().toBase64()).decode("ascii"),
-            "main_splitter": bytes(self._main_splitter.saveState().toBase64()).decode("ascii"),
+            "main_splitter_tabs": bytes(self._main_splitter.saveState().toBase64()).decode("ascii"),
             "geometry": bytes(self.saveGeometry().toBase64()).decode("ascii"),
         })
 

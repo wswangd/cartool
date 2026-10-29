@@ -1,7 +1,7 @@
 VERSION ""
 
 
-NS_ : 
+NS_ :
 	NS_DESC_
 	CM_
 	BA_DEF_
@@ -37,11 +37,11 @@ BU_: ECU Monitor
 
 
 BO_ 2566869309 ENGINE: 8 ECU
- SG_ QinjLperH : 48|16@1+ (1,0) [0.0|250.0] ""  Monitor
- SG_ Vspeed : 32|16@1+ (1,0) [0.0|255.0] "km/h"  Monitor
- SG_ ENGINE_n : 24|8@1+ (1,0) [0.0|125.0] "%"  Monitor
- SG_ Torque : 16|8@1+ (1,0) [0.0|128.0] "%"  Monitor
- SG_ N : 0|16@1+ (1,0) [0.0|4000.0] "r/min"  Monitor
+ SG_ QinjLperH : 48|16@1+ (0.05,0) [0.0|3276.75] "L/h"  Monitor
+ SG_ Vspeed : 32|16@1+ (1,0) [0|65535] "km/h"  Monitor
+ SG_ ENGINE_n : 24|8@1+ (1,0) [0|255] "%"  Monitor
+ SG_ Torque : 16|8@1+ (1,0) [0|255] "%"  Monitor
+ SG_ N : 0|16@1+ (1,0) [0|65535] "r/min"  Monitor
 
 BO_ 2364539904 ENGINE_BOSCH: 8 ECU
  SG_ Torque_b : 16|8@1- (1,0) [0.0|100.0] "%"  Monitor
@@ -61,89 +61,98 @@ BO_ 2565874493 SLAVE_Doser2: 8 ECU
  SG_ QDEF : 0|16@1+ (0.3,0.0) [0.0|2000000.0] "g/h"  Monitor
 
 BO_ 2566869821 Vehicle_PARA1: 8 ECU
- SG_ Qexh : 48|16@1+ (0.2,0.0) [0.0|1000.0] "kg/h"  Monitor
- SG_ Oil_T : 40|8@1- (1,0) [-128.0|128.0] ""  Monitor
- SG_ Fuel_T : 32|8@1- (1,0) [-128.0|128.0] ""  Monitor
- SG_ AMT : 24|8@1- (1,0) [-128.0|128.0] ""  Monitor
- SG_ BaroPre : 16|8@1+ (0.5,0.0) [0.0|128.0] ""  Monitor
- SG_ Fuel : 8|8@1+ (0.125,0.0) [0.0|100.0] ""  Monitor
- SG_ APP_R : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
+ SG_ Qexh : 48|16@1+ (0.2,0) [0.0|13107.0] "kg/h"  Monitor
+ SG_ Oil_T : 40|8@1- (1,0) [-128|127] "degC"  Monitor
+ SG_ Fuel_T : 32|8@1- (1,0) [-128|127] "degC"  Monitor
+ SG_ AMT : 24|8@1- (1,0) [-128|127] "degC"  Monitor
+ SG_ BaroPre : 16|8@1+ (0.5,0) [0.0|127.5] "kPa"  Monitor
+ SG_ Fuel : 8|8@1+ (0.125,0) [0.0|31.875] "km/L"  Monitor
+ SG_ APP_R : 0|8@1+ (0.4,0) [0.0|102.0] "%"  Monitor
 
 BO_ 2566870077 Vehicle_PARA2: 8 ECU
- SG_ Total_Vehicle_Distance : 32|32@1+ (0.125,0.0) [0.0|1000000.0] ""  Monitor
- SG_ Trip_Distance : 0|32@1+ (0.125,0.0) [0.0|1000000.0] ""  Monitor
+ SG_ Total_Vehicle_Distance : 32|32@1+ (0.125,0) [0.0|536870911.875] "km"  Monitor
+ SG_ Trip_Distance : 0|32@1+ (0.125,0) [0.0|536870911.875] "km"  Monitor
 
 BO_ 2566870333 Vehicle_PARA3: 8 ECU
- SG_ Cool_Temp : 16|8@1- (1,0) [-40.0|120.0] ""  Monitor
+ SG_ APP_FAI_CVN : 31|32@0+ (1,0) [0|4294967295] ""  Monitor
+ SG_ Cool_Temp : 16|8@1- (1,0) [-128|127] "degC"  Monitor
+ SG_ InterCool_Temp : 8|8@1- (1,0) [-128|127] "degC"  Monitor
+ SG_ Turb_Pressure_low8 : 0|8@1+ (1,0) [0|255] "kPa"  Monitor
 
 BO_ 2566870845 Vehicle_PARA4: 8 ECU
- SG_ SCR_EGTD : 48|16@1- (1,0) [-273.0|1000.0] ""  Monitor
- SG_ SCR_EGTU : 32|16@1- (1,0) [-273.0|1000.0] ""  Monitor
- SG_ DPF_EGTU : 16|16@1- (1,0) [-273.0|1000.0] ""  Monitor
- SG_ DOC_EGTU : 0|16@1- (1,0) [-273.0|1000.0] ""  Monitor
+ SG_ SCR_EGTD : 48|16@1- (1,0) [-32768|32767] "degC"  Monitor
+ SG_ SCR_EGTU : 32|16@1- (1,0) [-32768|32767] "degC"  Monitor
+ SG_ DPF_EGTU : 16|16@1- (1,0) [-32768|32767] "degC"  Monitor
+ SG_ DOC_EGTU : 0|16@1- (1,0) [-32768|32767] "degC"  Monitor
 
 BO_ 2566871101 Vehicle_PARA5: 8 ECU
- SG_ SCR_THAWING : 56|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ ECU_TIMEOUT : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ NOX2_TIMEOUT : 40|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ NOX1_TIMEOUT : 32|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ T3_EOBD_SUPPLY_ST : 16|16@1+ (1,0) [0.0|500.0] ""  Monitor
- SG_ T3_EOBD_DOSER_ST : 0|16@1+ (1,0) [0.0|500.0] ""  Monitor
+ SG_ SCR_THAWING : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ ECU_TIMEOUT : 48|8@1+ (1,0) [0|255] "s"  Monitor
+ SG_ NOX2_TIMEOUT : 40|8@1+ (1,0) [0|255] "s"  Monitor
+ SG_ NOX1_TIMEOUT : 32|8@1+ (1,0) [0|255] "s"  Monitor
+ SG_ T3_EOBD_SUPPLY_ST : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ T3_EOBD_DOSER_ST : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 BO_ 2566871357 Vehicle_PARA6: 8 ECU
- SG_ t_COOLV_CloseErr : 48|16@1+ (1,0) [0.0|65535.0] ""  Monitor
- SG_ t_COOLV_OpenErr : 32|16@1+ (1,0) [0.0|65535.0] ""  Monitor
- SG_ SV_2 : 16|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ SV_1 : 0|16@1+ (1,0) [0.0|1000.0] ""  Monitor
+ SG_ CWV_CloseTime_low16 : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ CWV_OpenTime_low16 : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Firmware_Version : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Qexh_PARA6 : 0|16@1+ (0.2,0) [0.0|13107.0] "kg/h"  Monitor
 
 BO_ 2566873149 Vehicle_PARA7: 8 ECU
- SG_ Thawing_State : 32|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ CWV_OPEN_TIME : 16|16@1+ (1,0) [0.0|65535.0] ""  Monitor
- SG_ HEAT_SATE : 8|8@1+ (1,0) [0.0|5.0] ""  Monitor
- SG_ CWV_STATE : 0|8@1+ (1,0) [0.0|5.0] ""  Monitor
+ SG_ inj_err_thawing_1 : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ inj_err_thawing_0 : 40|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Thawing_State : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ CWV_OPEN_TIME : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ HEAT_SATE : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ CWV_STATE : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566873405 PARA8_MASTER: 8 ECU
- SG_ st_DTC : 48|8@1+ (1,0) [0.0|256.0] ""  Monitor
- SG_ ACT_sta : 0|8@1+ (1,0) [0.0|256.0] ""  Monitor
+ SG_ v_sw_set : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ off_to_purge_flag : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ ACT_sta : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566870589 FAI_DTC: 8 ECU
- SG_ DTC_7 : 56|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_6 : 48|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_5 : 40|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_4 : 32|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_3 : 24|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_2 : 16|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_1 : 8|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ DTC_0 : 0|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ DTC_7 : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_6 : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_5 : 40|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_4 : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_3 : 24|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_2 : 16|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_1 : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DTC_0 : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566867517 WORK1_DOSER: 8 ECU
- SG_ EFI_PRESS : 48|16@1+ (1,0) [0.0|1000.0] "KPa"  Monitor
- SG_ prd_doser : 24|24@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ fre_doser : 16|8@1+ (1,0) [0.0|150.0] "Hz"  Monitor
- SG_ DOSER_State : 8|8@1+ (1.0,0.0) [0.0|10.0] ""  Monitor
- SG_ DCU_MODE : 0|8@1+ (1.0,0.0) [0.0|100.0] ""  Monitor
+ SG_ supply_t1e_modfiy_value : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ prd_supplier_low24 : 24|24@1+ (1,0) [0|16777215] ""  Monitor
+ SG_ DOSER_State : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ DCU_MODE : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566867773 WORK2_DOSER: 8 ECU
- SG_ T3_EOBD_doser : 48|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ Pumpstate_doser : 40|8@1+ (1,0) [0.0|256.0] ""  Monitor
- SG_ WORK2_DOSER_fre_doser : 32|8@1+ (1,0) [0.0|256.0] ""  Monitor
- SG_ T3_doser : 16|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ T1_doser : 0|16@1+ (1,0) [0.0|2500.0] ""  Monitor
+ SG_ T3_EOBD_selected_pump : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Pumpstate_doser : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ T3_selected_pump : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ T1_selected_pump : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 BO_ 2566868541 SENSOR1: 8 ECU
- SG_ CDEF : 48|16@1+ (0.25,0.0) [0.0|100.0] "%"  Monitor
- SG_ LDEF : 32|8@1+ (0.4,0.0) [0.0|100.0] "%"  Monitor
- SG_ TDEF : 16|8@1+ (1,-40) [-40.0|100.0] "℃"  Monitor
- SG_ Vbat_V : 8|8@1+ (0.15,-0.02) [0.0|50.0] ""  Monitor
- SG_ Vbat_AD : 0|8@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ CDEF : 48|8@1+ (0.25,0) [0.0|63.75] "%"  Monitor
+ SG_ LDEF : 32|8@1+ (0.4,0) [0.0|102.0] "%"  Monitor
+ SG_ TDEF : 16|8@1+ (1,-40) [-40|215] "degC"  Monitor
+ SG_ Vbat_raw_1 : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Vbat_raw_0 : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566868797 SENSOR2: 8 ECU
- SG_ PRESS_Value : 16|16@1+ (1,0) [50.0|900.0] "kpa"  Monitor
- SG_ PRESS_AD : 0|16@1+ (1,0) [0.0|255.0] ""  Monitor
+ SG_ NH3_Load_low16 : 55|16@0+ (1,0) [0|65535] ""  Monitor
+ SG_ LDEF_received : 32|8@1+ (0.4,0) [0.0|102.0] "%"  Monitor
+ SG_ PRESS_Value : 16|16@1+ (1,0) [0|65535] "kPa"  Monitor
+ SG_ supply_dc_voltage_level : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ PRESS_AD : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566873661 SENSOR4: 8 ECU
- SG_ NOxU : 40|16@1+ (1,0) [0.0|2000.0] "ppm"  Monitor
- SG_ NOxD : 24|16@1+ (1,0) [0.0|2000.0] "ppm"  Monitor
+ SG_ NOxU : 40|16@1+ (1,0) [0|65535] "ppm"  Monitor
+ SG_ NOxD_HighByte : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ NOxD_LowByte : 16|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ HEAT2_OPN_AD_low8 : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2565869137 NOX_U: 8 ECU
  SG_ NOx_u : 0|16@1+ (0.05,-200.0) [0.0|2000.0] "ppm"  Monitor
@@ -152,17 +161,17 @@ BO_ 2565869394 NOX_D: 8 ECU
  SG_ NOx_d : 0|16@1+ (0.05,-200.0) [0.0|2000.0] "ppm"  Monitor
 
 BO_ 2566874429 RUNTIME_1: 8 ECU
- SG_ OBD_C : 40|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ WUC : 24|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ DC : 0|24@1+ (1,0) [0.0|10000.0] ""  Monitor
+ SG_ OBD_C : 40|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ WUC : 24|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ DC : 0|24@1+ (1,0) [0|16777215] ""  Monitor
 
 BO_ 2566874685 RUNTIME_2: 8 ECU
  SG_ KEYON_S : 32|32@1+ (1,0) [0.0|100000.0] ""  Monitor
  SG_ ENG_RT_S : 0|32@1+ (1,0) [0.0|100000.0] ""  Monitor
 
 BO_ 2566874941 RUNTIME_3: 8 ECU
- SG_ nb_Supplier : 32|32@1+ (1,0) [0.0|100000.0] ""  Monitor
- SG_ nb_DOSER : 0|32@1+ (1,0) [0.0|100000.0] ""  Monitor
+ SG_ nb_Supplier : 32|32@1+ (1,0) [0|4294967295] ""  Monitor
+ SG_ nb_DOSER : 0|32@1+ (1,0) [0|4294967295] ""  Monitor
 
 BO_ 2566864957 CAL1: 8 ECU
  SG_ SCRT_tCatDs : 48|16@1- (1,0) [0.0|1000.0] ""  Monitor
@@ -183,45 +192,46 @@ BO_ 2566865725 CAL3: 8 ECU
  SG_ SCRT_tDiffCatUs2Ds : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
 
 BO_ 2566865981 CAL4: 8 ECU
- SG_ SCRT_tCatNorm : 48|16@1- (1,0) [0.0|1000.0] ""  Monitor
- SG_ SCRT_dtCatNorm : 32|16@1- (1,0) [0.0|1000.0] ""  Monitor
- SG_ SCRT_rHeatCat : 16|16@1- (1,0) [0.0|2000.0] ""  Monitor
- SG_ SCRT_dqCat : 0|16@1- (1,0) [0.0|1000.0] ""  Monitor
+ SG_ supply_t1e_uqs_modify_ee_raw : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ supply_t1e_uqs_modify_raw : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ supply_t1e_modfiy_flag : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_t3_Avalue_low16 : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ v_t3eobd_Avalue_low16 : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 BO_ 2566866237 CAL5: 8 ECU
- SG_ SUP_PRE : 32|32@1+ (1,0) [0.0|10000.0] ""  Monitor
- SG_ INJ_PRE : 0|32@1+ (1,0) [0.0|10000.0] ""  Monitor
+ SG_ Inj_Prd_1 : 32|32@1+ (1,0) [0|4294967295] ""  Monitor
+ SG_ Inj_Prd_0 : 0|32@1+ (1,0) [0|4294967295] ""  Monitor
 
 BO_ 2566866493 CAL6: 8 ECU
- SG_ HT2_AD : 56|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ HT1_AD : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ ISV_AD : 40|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ CVV_AD : 32|8@1+ (1,0) [0.0|255.0] ""  Monitor
- SG_ SUP_B_AD : 24|8@1+ (1,0) [0.0|50.0] ""  Monitor
- SG_ SUP_F_AD : 16|8@1+ (1,0) [0.0|10.0] ""  Monitor
- SG_ INJ_B_AD : 8|8@1+ (1,0) [0.0|50.0] ""  Monitor
- SG_ INJ_F_AD : 0|8@1+ (1,0) [0.0|10.0] ""  Monitor
+ SG_ v_ht2_short : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_ht1_short : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_isv_short : 40|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_cvv_short : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_sup_short2 : 24|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_sup_short1 : 16|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_inj_short2 : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_inj_short1 : 0|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566866749 CAL7: 8 ECU
- SG_ M_AD : 48|16@1+ (1,0) [0.0|1023.0] ""  Monitor
- SG_ F_AD : 32|16@1+ (1,0) [0.0|1023.0] ""  Monitor
- SG_ EGTD_AD : 16|16@1+ (1,0) [0.0|1023.0] ""  Monitor
- SG_ EGTU_AD : 0|16@1+ (1,0) [0.0|1023.0] ""  Monitor
+ SG_ bsp_get_egtd_raw : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ AD_capture_3 : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ EGTD_AD : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ EGTU_AD : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 BO_ 2566867005 CAL8: 8 ECU
- SG_ nb_T3U_supplier : 56|8@1+ (1,0) [0.0|100.0] ""  Monitor
- SG_ nb_T3U_doser : 48|8@1+ (1,0) [0.0|100.0] ""  Monitor
- SG_ nb_T3L_supplier : 40|8@1+ (1,0) [0.0|100.0] ""  Monitor
- SG_ nb_T3L_doser : 32|8@1+ (1,0) [0.0|100.0] ""  Monitor
- SG_ nb_T3L_50doser : 24|8@1+ (1,0) [0.0|100.0] ""  Monitor
- SG_ v_cal_pump_err : 16|8@1+ (1,0) [0.0|100.0] ""  Monitor
+ SG_ inj_empty_count_1 : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ inj_empty_count_0 : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ inj_lock_count_1 : 40|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ inj_lock_count_0 : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_inj_err_blocking2 : 24|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_cal_pump_err : 16|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ v_inj_blocking_nb : 8|8@1+ (1,0) [0|255] ""  Monitor
 
 BO_ 2566867261 CAL9: 8 ECU
- SG_ Pumpstate_supplier : 56|8@1+ (1,0) [0.0|256.0] ""  Monitor
- SG_ T3_EOBD_supplier : 40|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ T3_supplier : 24|16@1+ (1,0) [0.0|1000.0] ""  Monitor
- SG_ fre_supplier : 16|8@1+ (1,0) [0.0|256.0] ""  Monitor
- SG_ T1_supplier : 0|16@1+ (1,0) [0.0|2000.0] ""  Monitor
+ SG_ Pumpstate_supplier : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ T3_EOBD_supplier : 40|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ T3_supplier : 24|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ T1_supplier : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 BO_ 2566805155 UQS1: 8 ECU
  SG_ L_PRESS : 48|8@1+ (1,0) [0.0|255.0] ""  Monitor
@@ -242,193 +252,260 @@ BO_ 2566805053 UQS4: 8 ECU
  SG_ L_DTDEF : 8|8@1+ (1,-40) [-40.0|80.0] ""  Monitor
  SG_ L_DLDEF : 0|8@1+ (0.4,0.0) [0.0|100.0] ""  Monitor
 
+BO_ 2566889533 FAI_FLASH: 8 ECU
+ SG_ Flash_Data_3 : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Flash_Data_2 : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Flash_Data_1 : 40|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Flash_Data_0 : 32|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Flash_Address : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Flash_Marker_DA : 8|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Flash_Marker_A0 : 0|8@1+ (1,0) [0|255] ""  Monitor
+
+BO_ 2566875197 RUNTIME_4: 8 ECU
+ SG_ Num_T3_EOBD_Doser : 56|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Num_T3_Doser : 48|8@1+ (1,0) [0|255] ""  Monitor
+ SG_ Ave_T3_Doser_Diff : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Ave_T3_EOBD_Doser : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ Ave_T3_Doser : 0|16@1+ (1,0) [0|65535] ""  Monitor
+
+BO_ 2566875453 RUNTIME_5: 8 ECU
+ SG_ Sum_T3_EOBD_Doser : 32|32@1+ (1,0) [0|4294967295] ""  Monitor
+ SG_ Sum_T3_Doser : 0|32@1+ (1,0) [0|4294967295] ""  Monitor
+
+BO_ 2566876221 RUNTIME_8: 8 ECU
+ SG_ Test_RunTime : 0|32@1+ (1,0) [0|4294967295] "s"  Monitor
+
+BO_ 2566876477 SCREFF1: 8 ECU
+ SG_ ADC_Channel_3 : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_2 : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_1 : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_0 : 0|16@1+ (1,0) [0|65535] ""  Monitor
+
+BO_ 2566876733 SCREFF2: 8 ECU
+ SG_ ADC_Channel_7 : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_6 : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_5 : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_4 : 0|16@1+ (1,0) [0|65535] ""  Monitor
+
+BO_ 2566876989 SCREFF3: 8 ECU
+ SG_ ADC_Channel_11 : 48|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_10 : 32|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_9 : 16|16@1+ (1,0) [0|65535] ""  Monitor
+ SG_ ADC_Channel_8 : 0|16@1+ (1,0) [0|65535] ""  Monitor
 
 
 
-CM_ BO_ 2566869309 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566869309 QinjLperH "Original: QinjLperH; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机燃油消耗率";
-CM_ SG_ 2566869309 Vspeed "Original: Vspeed(km/h); bytes=4; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 车速";
-CM_ SG_ 2566869309 ENGINE_n "Original: n(%); bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机转速百分比";
-CM_ SG_ 2566869309 Torque "Original: Torque(%); bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机扭矩百分比";
-CM_ SG_ 2566869309 N "Original: N(r/min); bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机转速";
-CM_ BO_ 2364539904 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+
+CM_ BO_ 2566869309 "Verified against scr_frame.c frame_disparameter case 20; FRAME_ENGINE; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566869309 QinjLperH "frame_disparameter case 20: Vehicle.QinjLperH; byte 6..7.";
+CM_ SG_ 2566869309 Vspeed "frame_disparameter case 20: Vehicle.Speed; byte 4..5.";
+CM_ SG_ 2566869309 ENGINE_n "frame_disparameter case 20: Vehicle.RPM_Percent; byte 3..3.";
+CM_ SG_ 2566869309 Torque "frame_disparameter case 20: Vehicle.Torque_Percent; byte 2..2.";
+CM_ SG_ 2566869309 N "frame_disparameter case 20: Vehicle.RPM; byte 0..1.";
+CM_ BO_ 2364539904 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2364539904 Torque_b "Original: Torque(%)_b; bytes=2; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. BOSCH_ECU发动机扭矩百分比";
-CM_ BO_ 2565874688 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2565874688 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2565874688 FCC_STATE "Original: FCC_STATE; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. FCC状态";
 CM_ SG_ 2565874688 FCC_DTC "Original: FCC_DTC; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. bit0FCC故障 bit1泵驱动开短路 bit2泵加热开短路 bit3喷嘴开短路";
 CM_ SG_ 2565874688 FCC_Integral "Original: FCC_Integral; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 当前DC中的需求的喷射量积分";
 CM_ SG_ 2565874688 DEF "Original: DEF(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. DEF喷射量(ECU设定)";
-CM_ BO_ 2364548096 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2364548096 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2364548096 DEF2 "Original: DEF2(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. DEF喷射量(ECU设定)";
-CM_ BO_ 2565874493 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2565874493 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2565874493 DCU_Integral "Original: DCU_Integral; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 实际喷射量积分值";
 CM_ SG_ 2565874493 System_Status "Original: System_Status; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 喷射系统状态";
 CM_ SG_ 2565874493 QDEF "Original: QDEF(g/h); bytes=01; type=word; y=x*0.3. ASSUMED Intel byte order; byte-list length takes precedence. QDEF喷射量(实际)";
-CM_ BO_ 2566869821 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566869821 Qexh "Original: Qexh(kg/h); bytes=67; type=word; y=x*0.2. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量";
-CM_ SG_ 2566869821 Oil_T "Original: Oil_T; bytes=5; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 机油温度";
-CM_ SG_ 2566869821 Fuel_T "Original: Fuel_T; bytes=4; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 燃油温度";
-CM_ SG_ 2566869821 AMT "Original: AMT; bytes=3; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 环境温度";
-CM_ SG_ 2566869821 BaroPre "Original: BaroPre; bytes=2; type=byte; y=x*0.5. ASSUMED Intel byte order; byte-list length takes precedence. 大气压力";
-CM_ SG_ 2566869821 Fuel "Original: Fuel; bytes=1; type=byte; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 瞬时燃油消耗率";
-CM_ SG_ 2566869821 APP_R "Original: APP_R; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 加速踏板位置";
-CM_ BO_ 2566870077 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566870077 Total_Vehicle_Distance "Original: Total_Vehicle_Distance; bytes=4567; type=dword; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 车辆累计行驶距离";
-CM_ SG_ 2566870077 Trip_Distance "Original: Trip_Distance; bytes=0123; type=dword; y=x*0.125. ASSUMED Intel byte order; byte-list length takes precedence. 本次运行行驶距离";
-CM_ BO_ 2566870333 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566870333 Cool_Temp "Original: Cool_Temp; bytes=2; type=sbyte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 冷却水温";
-CM_ BO_ 2566870845 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566870845 SCR_EGTD "Original: SCR_EGTD; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. SCR出口温度";
-CM_ SG_ 2566870845 SCR_EGTU "Original: SCR_EGTU; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. SCR入口温度";
-CM_ SG_ 2566870845 DPF_EGTU "Original: DPF_EGTU; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DPF入口温度";
-CM_ SG_ 2566870845 DOC_EGTU "Original: DOC_EGTU; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DOC入口温度";
-CM_ BO_ 2566871101 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566871101 SCR_THAWING "Original: SCR_THAWING; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 解冻状态0非低温,1低温";
-CM_ SG_ 2566871101 ECU_TIMEOUT "Original: ECU_TIMEOUT; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ECU超时";
-CM_ SG_ 2566871101 NOX2_TIMEOUT "Original: NOX2_TIMEOUT; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX2超时";
-CM_ SG_ 2566871101 NOX1_TIMEOUT "Original: NOX1_TIMEOUT; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX1超时";
-CM_ SG_ 2566871101 T3_EOBD_SUPPLY_ST "Original: T3_EOBD_SUPPLY_ST; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. T3_EOBD_SUPPLY_ST";
-CM_ SG_ 2566871101 T3_EOBD_DOSER_ST "Original: T3_EOBD_DOSER_ST; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. T3_EOBD_DOSER_ST";
-CM_ BO_ 2566871357 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566871357 t_COOLV_CloseErr "Original: t_COOLV_CloseErr; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水电磁阀故障关闭时间";
-CM_ SG_ 2566871357 t_COOLV_OpenErr "Original: t_COOLV_OpenErr; bytes=45; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水电磁阀故障开启时间";
-CM_ SG_ 2566871357 SV_2 "Original: SV_2; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量2";
-CM_ SG_ 2566871357 SV_1 "Original: SV_1; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 排气流量1";
-CM_ BO_ 2566873149 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566873149 Thawing_State "Original: Thawing_State; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 解冻状态";
-CM_ SG_ 2566873149 CWV_OPEN_TIME "Original: CWV_OPEN_TIME; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀开启时间 秒";
-CM_ SG_ 2566873149 HEAT_SATE "Original: HEAT_SATE; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管开启状态0关闭1开启";
-CM_ SG_ 2566873149 CWV_STATE "Original: CWV_STATE; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀开启状态0关闭1开启";
-CM_ BO_ 2566873405 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566873405 st_DTC "Original: st_DTC; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DTC状态0当前故障1判定故障2确定故障3历史故障4永久故障";
-CM_ SG_ 2566873405 ACT_sta "Original: ACT_sta; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 执行器状态";
-CM_ BO_ 2566870589 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566870589 DTC_7 "Original: DTC_7; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_6 "Original: DTC_6; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_5 "Original: DTC_5; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_4 "Original: DTC_4; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_3 "Original: DTC_3; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_2 "Original: DTC_2; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_1 "Original: DTC_1; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ SG_ 2566870589 DTC_0 "Original: DTC_0; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. ";
-CM_ BO_ 2566867517 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566867517 EFI_PRESS "Original: EFI_PRESS(KPa); bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管道压力";
-CM_ SG_ 2566867517 prd_doser "Original: prd_doser; bytes=345; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵的工作周期";
-CM_ SG_ 2566867517 fre_doser "Original: fre_doser(Hz); bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵的频率";
-CM_ SG_ 2566867517 DOSER_State "Original: DOSER_State; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 泵状态
-0:INI，初始化
-1:PUMP_OFF，泵停止
-2:PRIMING，填充
-3:DOSING，喷射
-4:PURGING，清扫
-5:DIAG，诊断";
-CM_ SG_ 2566867517 DCU_MODE "Original: DCU_MODE; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. DCU工作模式
-0:QTEST
-1:SLAVE
-2:VMASTER
-3:MASTER";
-CM_ BO_ 2566867773 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566867773 T3_EOBD_doser "Original: T3_EOBD_doser; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3_EOBD";
-CM_ SG_ 2566867773 Pumpstate_doser "Original: Pumpstate_doser; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵当前状态";
-CM_ SG_ 2566867773 WORK2_DOSER_fre_doser "Original: fre_doser; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵频率";
-CM_ SG_ 2566867773 T3_doser "Original: T3_doser; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3";
-CM_ SG_ 2566867773 T1_doser "Original: T1_doser; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T1";
-CM_ BO_ 2566868541 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566868541 CDEF "Original: CDEF(%); bytes=6; type=word; y=x*0.25. ASSUMED Intel byte order; byte-list length takes precedence. 尿素浓度百分比";
-CM_ SG_ 2566868541 LDEF "Original: LDEF(%); bytes=4; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
-CM_ SG_ 2566868541 TDEF "Original: TDEF(℃); bytes=2; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素温度";
-CM_ SG_ 2566868541 Vbat_V "Original: Vbat_V; bytes=1; type=byte; y=x*0.15-0.02. ASSUMED Intel byte order; byte-list length takes precedence. 电压";
-CM_ SG_ 2566868541 Vbat_AD "Original: Vbat_AD; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 电压采样";
-CM_ BO_ 2566868797 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566868797 PRESS_Value "Original: PRESS_Value(kpa); bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管路压力值";
-CM_ SG_ 2566868797 PRESS_AD "Original: PRESS_AD; bytes=0; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 管路压力值采样";
-CM_ BO_ 2566873661 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566873661 NOxU "Original: NOxU(ppm); bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX浓度上游";
-CM_ SG_ 2566873661 NOxD "Original: NOxD(ppm); bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. NOX浓度下游";
-CM_ BO_ 2565869137 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566869821 "Verified against scr_frame.c frame_disparameter case 22; FRAME_PARA1_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566869821 Qexh "frame_disparameter case 22: Vehicle.Gas_Flow; byte 6..7.";
+CM_ SG_ 2566869821 Oil_T "frame_disparameter case 22: Vehicle.Oil_Temp; byte 5..5.";
+CM_ SG_ 2566869821 Fuel_T "frame_disparameter case 22: Vehicle.Fuel_Temp; byte 4..4.";
+CM_ SG_ 2566869821 AMT "frame_disparameter case 22: Vehicle.Air_Temp; byte 3..3.";
+CM_ SG_ 2566869821 BaroPre "frame_disparameter case 22: Vehicle.Air_Press; byte 2..2.";
+CM_ SG_ 2566869821 Fuel "frame_disparameter case 22: Vehicle.Qinj >> 6; byte 1..1.";
+CM_ SG_ 2566869821 APP_R "frame_disparameter case 22: Vehicle.Pedal; byte 0..0.";
+CM_ BO_ 2566870077 "Verified against scr_frame.c frame_disparameter case 23; FRAME_PARA2_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566870077 Total_Vehicle_Distance "frame_disparameter case 23: Vehicle.Total_Distance_L | (Vehicle.Total_Distance_H << 16); byte 4..7.";
+CM_ SG_ 2566870077 Trip_Distance "frame_disparameter case 23: Vehicle.Trip_Distance_L | (Vehicle.Trip_Distance_H << 16); byte 0..3.";
+CM_ BO_ 2566870333 "Verified against scr_frame.c frame_disparameter case 24; FRAME_PARA3_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566870333 APP_FAI_CVN "frame_disparameter case 24: APP_FAI_CVN; byte 3..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870333 Cool_Temp "frame_disparameter case 24: SCRTRL_Cool_Temp; byte 2..2.";
+CM_ SG_ 2566870333 InterCool_Temp "frame_disparameter case 24: Vehicle.Intercooler_Temp; byte 1..1.";
+CM_ SG_ 2566870333 Turb_Pressure_low8 "frame_disparameter case 24: Vehicle.Turb_Press; byte 0..0.";
+CM_ BO_ 2566870845 "Verified against scr_frame.c frame_disparameter case 25; FRAME_PARA4_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566870845 SCR_EGTD "frame_disparameter case 25: Vehicle.SCR_EGTD; byte 6..7.";
+CM_ SG_ 2566870845 SCR_EGTU "frame_disparameter case 25: Vehicle.SCR_EGTU; byte 4..5.";
+CM_ SG_ 2566870845 DPF_EGTU "frame_disparameter case 25: Vehicle.DPF_EGTU; byte 2..3.";
+CM_ SG_ 2566870845 DOC_EGTU "frame_disparameter case 25: Vehicle.DOC_EGTU; byte 0..1.";
+CM_ BO_ 2566871101 "Verified against scr_frame.c frame_disparameter case 26; FRAME_PARA5_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566871101 SCR_THAWING "frame_disparameter case 26: Scr.thawing; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566871101 ECU_TIMEOUT "frame_disparameter case 26: _STRU_ECU.COMMON.TimeOut_200ms / 5; byte 6..6.";
+CM_ SG_ 2566871101 NOX2_TIMEOUT "frame_disparameter case 26: _STRU_NOX2.COMMON.TimeOut_200ms / 5; byte 5..5.";
+CM_ SG_ 2566871101 NOX1_TIMEOUT "frame_disparameter case 26: _STRU_NOX1.COMMON.TimeOut_200ms / 5; byte 4..4.";
+CM_ SG_ 2566871101 T3_EOBD_SUPPLY_ST "frame_disparameter case 26: bsp_pump_get_T3_EOBD_ST(1); byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566871101 T3_EOBD_DOSER_ST "frame_disparameter case 26: bsp_pump_get_T3_EOBD_ST(0); byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566871357 "Verified against scr_frame.c frame_disparameter case 27; FRAME_PARA6_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566871357 CWV_CloseTime_low16 "frame_disparameter case 27: Scr.cwv_close_time; byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566871357 CWV_OpenTime_low16 "frame_disparameter case 27: Scr.cwv_open_time; byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566871357 Firmware_Version "frame_disparameter case 27: VERSION; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566871357 Qexh_PARA6 "frame_disparameter case 27: Vehicle.Gas_Flow; byte 0..1.";
+CM_ BO_ 2566873149 "Verified against scr_frame.c frame_disparameter case 28; FRAME_PARA7_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566873149 inj_err_thawing_1 "frame_disparameter case 28: v_inj_err_thawing[1]; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873149 inj_err_thawing_0 "frame_disparameter case 28: v_inj_err_thawing[0]; byte 5..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873149 Thawing_State "frame_disparameter case 28: Scr.thawing; byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873149 CWV_OPEN_TIME "frame_disparameter case 28: SCRTRL_CWV_OpenTime; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873149 HEAT_SATE "frame_disparameter case 28: SCR_HOSE_HEATER_CTL; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873149 CWV_STATE "frame_disparameter case 28: SCR_CWV_CTL; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566873405 "Verified against scr_frame.c frame_disparameter case 29; FRAME_PARA8_MASTER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566873405 v_sw_set "frame_disparameter case 29: v_sw_set; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873405 off_to_purge_flag "frame_disparameter case 29: v_off_to_purge_flag; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566873405 ACT_sta "frame_disparameter case 29: Scr.inj.Byte; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566870589 "Verified against scr_frame.c frame_disparameter case 30; FRAME_FAI_DTC; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566870589 DTC_7 "frame_disparameter case 30: v_SPNX_forMIL[7][v_sw_set]; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_6 "frame_disparameter case 30: v_SPNX_forMIL[6][v_sw_set]; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_5 "frame_disparameter case 30: v_SPNX_forMIL[5][v_sw_set]; byte 5..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_4 "frame_disparameter case 30: v_SPNX_forMIL[4][v_sw_set]; byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_3 "frame_disparameter case 30: v_SPNX_forMIL[3][v_sw_set]; byte 3..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_2 "frame_disparameter case 30: v_SPNX_forMIL[2][v_sw_set]; byte 2..2. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_1 "frame_disparameter case 30: v_SPNX_forMIL[1][v_sw_set]; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566870589 DTC_0 "frame_disparameter case 30: v_SPNX_forMIL[0][v_sw_set]; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566867517 "Verified against scr_frame.c frame_disparameter case 11; FRAME_WORK1_DOSER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566867517 supply_t1e_modfiy_value "frame_disparameter case 11: supply_t1e_modfiy_value; byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867517 prd_supplier_low24 "frame_disparameter case 11: bsp_pump_get_prd(1); byte 3..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867517 DOSER_State "frame_disparameter case 11: Scr.pump_sta; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867517 DCU_MODE "frame_disparameter case 11: Scr.mode; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566867773 "Verified against scr_frame.c frame_disparameter case 12; FRAME_WORK2_DOSER; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566867773 T3_EOBD_selected_pump "frame_disparameter case 12: Scr.module == 0 ? bsp_pump_get_t3_eobd(1) : bsp_pump_get_t3_eobd(0); byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867773 Pumpstate_doser "frame_disparameter case 12: Scr.pump_sta; byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867773 T3_selected_pump "frame_disparameter case 12: Scr.module == 0 ? bsp_pump_get_t3(1) : bsp_pump_get_t3(0); byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867773 T1_selected_pump "frame_disparameter case 12: Scr.module == 0 ? bsp_pump_get_t1(1) : bsp_pump_get_t1(0); byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566868541 "Verified against scr_frame.c frame_disparameter case 14; FRAME_SENSOR1; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566868541 CDEF "frame_disparameter case 14: Scr.cdef; byte 6..6.";
+CM_ SG_ 2566868541 LDEF "frame_disparameter case 14: Scr.ldef; byte 4..4.";
+CM_ SG_ 2566868541 TDEF "frame_disparameter case 14: Scr.tdef; byte 2..2.";
+CM_ SG_ 2566868541 Vbat_raw_1 "frame_disparameter case 14: bsp_inj_vbat(); byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566868541 Vbat_raw_0 "frame_disparameter case 14: bsp_inj_vbat(); byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566868797 "Verified against scr_frame.c frame_disparameter case 15; FRAME_SENSOR2; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566868797 NH3_Load_low16 "frame_disparameter case 15: SCRNH3LD_mNH3LdCurr; byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566868797 LDEF_received "frame_disparameter case 15: _STRU_AT1T1I.Byte[0]; byte 4..4.";
+CM_ SG_ 2566868797 PRESS_Value "frame_disparameter case 15: v_press; byte 2..3.";
+CM_ SG_ 2566868797 supply_dc_voltage_level "frame_disparameter case 15: supply_dc_voltage_level; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566868797 PRESS_AD "frame_disparameter case 15: v_press_ad; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566873661 "Verified against scr_frame.c frame_disparameter case 17; FRAME_SENSOR4; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566873661 NOxU "frame_disparameter case 17: Scr.nox1; byte 5..6.";
+CM_ SG_ 2566873661 NOxD_HighByte "frame_disparameter case 17: Scr.nox2 >> 8; byte 4..4. Raw/internal value; physical unit not established. NOxD_ppm = NOxD_LowByte + 256 * NOxD_HighByte; byte 3 is zero.";
+CM_ SG_ 2566873661 NOxD_LowByte "frame_disparameter case 17: Scr.nox2 & 0xFF; byte 2..2. Raw/internal value; physical unit not established. NOxD_ppm = NOxD_LowByte + 256 * NOxD_HighByte; byte 3 is zero.";
+CM_ SG_ 2566873661 HEAT2_OPN_AD_low8 "frame_disparameter case 17: HEAT2_OPN_AD; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2565869137 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2565869137 NOx_u "Original: NOx_u(ppm); bytes=01; type=dword; y=x*0.05-200. ASSUMED Intel byte order; byte-list length takes precedence. 上游NOX浓度";
-CM_ BO_ 2565869394 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2565869394 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2565869394 NOx_d "Original: NOx_d(ppm); bytes=01; type=dword; y=x*0.05-200. ASSUMED Intel byte order; byte-list length takes precedence. 下游NOX浓度";
-CM_ BO_ 2566874429 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566874429 OBD_C "Original: OBD_C; bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. OBD循环数";
-CM_ SG_ 2566874429 WUC "Original: WUC; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 暖机循环数";
-CM_ SG_ 2566874429 DC "Original: DC; bytes=012; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 驾驶循环数";
-CM_ BO_ 2566874685 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566874429 "Verified against scr_frame.c frame_disparameter case 32; RUNTIME_1; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566874429 OBD_C "frame_disparameter case 32: Scr.obdc; byte 5..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566874429 WUC "frame_disparameter case 32: Scr.wuc; byte 3..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566874429 DC "frame_disparameter case 32: Scr.dc; byte 0..2. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566874685 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566874685 KEYON_S "Original: KEYON_S; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 钥匙累计开启时间";
 CM_ SG_ 2566874685 ENG_RT_S "Original: ENG_RT_S; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 发动机累计运行时间";
-CM_ BO_ 2566874941 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566874941 nb_Supplier "Original: nb_Supplier; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵动作次数";
-CM_ SG_ 2566874941 nb_DOSER "Original: nb_DOSER; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵动作次数";
-CM_ BO_ 2566864957 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566874941 "Verified against scr_frame.c frame_disparameter case 34; RUNTIME_3; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566874941 nb_Supplier "frame_disparameter case 34: bsp_pump_get_counter(1); byte 4..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566874941 nb_DOSER "frame_disparameter case 34: bsp_pump_get_counter(0); byte 0..3. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566864957 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566864957 SCRT_tCatDs "Original: SCRT_tCatDs; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器下游温度";
 CM_ SG_ 2566864957 SCRT_tCatUs "Original: SCRT_tCatUs; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器上游温度";
 CM_ SG_ 2566864957 SCRT_dmEG "Original: SCRT_dmEG; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气流量kg/s";
 CM_ SG_ 2566864957 SCRT_cEG "Original: SCRT_cEG; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气比热容";
-CM_ BO_ 2566865213 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566865213 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566865213 SCRT_rHeatCat2Env "Original: SCRT_rHeatCat2Env; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热热阻";
 CM_ SG_ 2566865213 SCRT_drHeatCat2Env "Original: SCRT_drHeatCat2Env; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热热阻率";
 CM_ SG_ 2566865213 SCRT_tDiffCatNorm2Env "Original: SCRT_tDiffCatNorm2Env; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度与环境温度差值";
 CM_ SG_ 2566865213 SCRT_kCatNorm2Ds "Original: SCRT_kCatNorm2Ds; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度与下游温度转换系数";
-CM_ BO_ 2566865725 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566865725 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566865725 SCRT_dqCat2Env "Original: SCRT_dqCat2Env; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器向环境散热量";
 CM_ SG_ 2566865725 SCRT_dqEG2Cat "Original: SCRT_dqEG2Cat; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 废气向催化器输入热量";
 CM_ SG_ 2566865725 SCRT_tCatDsBackup "Original: SCRT_tCatDsBackup; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器下游温度备份值";
 CM_ SG_ 2566865725 SCRT_tDiffCatUs2Ds "Original: SCRT_tDiffCatUs2Ds; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器上下游温度差";
-CM_ BO_ 2566865981 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566865981 SCRT_tCatNorm "Original: SCRT_tCatNorm; bytes=67; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度";
-CM_ SG_ 2566865981 SCRT_dtCatNorm "Original: SCRT_dtCatNorm; bytes=45; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器名义温度改变量(每个DCU运算间隔)";
-CM_ SG_ 2566865981 SCRT_rHeatCat "Original: SCRT_rHeatCat; bytes=23; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器热惯量";
-CM_ SG_ 2566865981 SCRT_dqCat "Original: SCRT_dqCat; bytes=01; type=sword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 催化器热量变化值";
-CM_ BO_ 2566866237 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566866237 SUP_PRE "Original: SUP_PRE; bytes=4567; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵工作周期";
-CM_ SG_ 2566866237 INJ_PRE "Original: INJ_PRE; bytes=0123; type=dword; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 喷嘴工作周期";
-CM_ BO_ 2566866493 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566866493 HT2_AD "Original: HT2_AD; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管2短路采样AD";
-CM_ SG_ 2566866493 HT1_AD "Original: HT1_AD; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 加热管1短路采样AD";
-CM_ SG_ 2566866493 ISV_AD "Original: ISV_AD; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 空气阀短路采样AD";
-CM_ SG_ 2566866493 CVV_AD "Original: CVV_AD; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 断水阀短路采样AD";
-CM_ SG_ 2566866493 SUP_B_AD "Original: SUP_B_AD; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵短路采样AD2";
-CM_ SG_ 2566866493 SUP_F_AD "Original: SUP_F_AD; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵短路采样AD1";
-CM_ SG_ 2566866493 INJ_B_AD "Original: INJ_B_AD; bytes=1; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵短路采样AD2";
-CM_ SG_ 2566866493 INJ_F_AD "Original: INJ_F_AD; bytes=0; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵短路采样AD1";
-CM_ BO_ 2566866749 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566866749 M_AD "Original: M_AD; bytes=67; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 主继电器开路采样值";
-CM_ SG_ 2566866749 F_AD "Original: F_AD; bytes=45; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 副继电器开路采样值";
-CM_ SG_ 2566866749 EGTD_AD "Original: EGTD_AD; bytes=23; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 下游排温AD值";
-CM_ SG_ 2566866749 EGTU_AD "Original: EGTU_AD; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 上游排温AD值";
-CM_ BO_ 2566867005 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566867005 nb_T3U_supplier "Original: nb_T3U_supplier; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3超上限的次数";
-CM_ SG_ 2566867005 nb_T3U_doser "Original: nb_T3U_doser; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3超上限的次数";
-CM_ SG_ 2566867005 nb_T3L_supplier "Original: nb_T3L_supplier; bytes=5; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3超下限的次数";
-CM_ SG_ 2566867005 nb_T3L_doser "Original: nb_T3L_doser; bytes=4; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵T3超下限的次数";
-CM_ SG_ 2566867005 nb_T3L_50doser "Original: nb_T3L_50doser; bytes=3; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 计量泵偏差50%超下限的次数";
-CM_ SG_ 2566867005 v_cal_pump_err "Original: v_cal_pump_err; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 故障状态";
-CM_ BO_ 2566867261 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
-CM_ SG_ 2566867261 Pumpstate_supplier "Original: Pumpstate_supplier; bytes=7; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵当前状态/0正常动作/2诊断管路是否异常/3扫描模式/4解冻模式/5泵油动作，发现空泵之后，适时的进行泵油，以保证有液体之后，可以顺利填充";
-CM_ SG_ 2566867261 T3_EOBD_supplier "Original: T3_EOBD_supplier; bytes=56; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3_EOBD";
-CM_ SG_ 2566867261 T3_supplier "Original: T3_supplier; bytes=34; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T3";
-CM_ SG_ 2566867261 fre_supplier "Original: fre_supplier; bytes=2; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵频率";
-CM_ SG_ 2566867261 T1_supplier "Original: T1_supplier; bytes=01; type=word; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 供给泵T1";
-CM_ BO_ 2566805155 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566865981 "Verified against scr_frame.c frame_disparameter case 3; FRAME_PARA_CAL4; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566865981 supply_t1e_uqs_modify_ee_raw "frame_disparameter case 3: supply_t1e_uqs_modfiy_value_ee; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566865981 supply_t1e_uqs_modify_raw "frame_disparameter case 3: supply_t1e_uqs_modfiy_value; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566865981 supply_t1e_modfiy_flag "frame_disparameter case 3: supply_t1e_modfiy_flag; byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566865981 v_t3_Avalue_low16 "frame_disparameter case 3: v_t3_Avalue; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566865981 v_t3eobd_Avalue_low16 "frame_disparameter case 3: v_t3eobd_Avalue; byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566866237 "Verified against scr_frame.c frame_disparameter case 4; FRAME_PARA_CAL5; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566866237 Inj_Prd_1 "frame_disparameter case 4: Inj.Prd[1]; byte 4..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866237 Inj_Prd_0 "frame_disparameter case 4: Inj.Prd[0]; byte 0..3. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566866493 "Verified against scr_frame.c frame_disparameter case 5; FRAME_PARA_CAL6; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566866493 v_ht2_short "frame_disparameter case 5: v_ht2_short; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_ht1_short "frame_disparameter case 5: v_ht1_short; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_isv_short "frame_disparameter case 5: v_isv_short; byte 5..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_cvv_short "frame_disparameter case 5: v_cvv_short; byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_sup_short2 "frame_disparameter case 5: v_sup_short2; byte 3..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_sup_short1 "frame_disparameter case 5: v_sup_short1; byte 2..2. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_inj_short2 "frame_disparameter case 5: v_inj_short2; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866493 v_inj_short1 "frame_disparameter case 5: v_inj_short1; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566866749 "Verified against scr_frame.c frame_disparameter case 6; FRAME_PARA_CAL7; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566866749 bsp_get_egtd_raw "frame_disparameter case 6: bsp_get_egtd(); byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866749 AD_capture_3 "frame_disparameter case 6: AD_capture(3); byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866749 EGTD_AD "frame_disparameter case 6: d_egtd_ave; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566866749 EGTU_AD "frame_disparameter case 6: d_egtu_ave; byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566867005 "Verified against scr_frame.c frame_disparameter case 7; FRAME_PARA_CAL8; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566867005 inj_empty_count_1 "frame_disparameter case 7: inj_get_empty_count(1); byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 inj_empty_count_0 "frame_disparameter case 7: inj_get_empty_count(0); byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 inj_lock_count_1 "frame_disparameter case 7: inj_get_lock_count(1); byte 5..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 inj_lock_count_0 "frame_disparameter case 7: inj_get_lock_count(0); byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 v_inj_err_blocking2 "frame_disparameter case 7: v_inj_err_blocking2; byte 3..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 v_cal_pump_err "frame_disparameter case 7: v_cal_pump_err; byte 2..2. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867005 v_inj_blocking_nb "frame_disparameter case 7: v_inj_blocking_nb; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566867261 "Verified against scr_frame.c frame_disparameter case 8; FRAME_PARA_CAL9; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566867261 Pumpstate_supplier "frame_disparameter case 8: Inj.diager[1]; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867261 T3_EOBD_supplier "frame_disparameter case 8: bsp_pump_get_t3_eobd(1); byte 5..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867261 T3_supplier "frame_disparameter case 8: bsp_pump_get_t3(1); byte 3..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566867261 T1_supplier "frame_disparameter case 8: bsp_pump_get_t1(1); byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566805155 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566805155 L_PRESS "Original: L_PRESS; bytes=6; type=byte; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力AD采样";
 CM_ SG_ 2566805155 L_TDEF "Original: L_TDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
 CM_ SG_ 2566805155 L_LDEF "Original: L_LDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
-CM_ BO_ 2566757283 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566757283 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566757283 C_CAL2 "Original: C_CAL2; bytes=7; type=inferred; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力标定值2";
 CM_ SG_ 2566757283 C_CAL1 "Original: C_CAL1; bytes=6; type=inferred; y=x. ASSUMED Intel byte order; byte-list length takes precedence. 压力标定值1";
 CM_ SG_ 2566757283 C_CDEF "Original: C_CDEF; bytes=1; type=byte; y=x*0.25. ASSUMED Intel byte order; byte-list length takes precedence. 尿素浓度";
 CM_ SG_ 2566757283 C_TDEF "Original: C_TDEF; bytes=0; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 品质传感器温度值";
-CM_ BO_ 2566804992 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566804992 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566804992 L_ETDEF "Original: L_ETDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
 CM_ SG_ 2566804992 L_ELDEF "Original: L_ELDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
-CM_ BO_ 2566805053 "DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
+CM_ BO_ 2566805053 "Legacy STRUOFVIEW definition; NOT verified by the supplied frame_disparameter implementation. DRAFT conversion; assumed 8-byte payload and Intel byte order; verify against ECU captures.";
 CM_ SG_ 2566805053 L_DTDEF "Original: L_DTDEF; bytes=1; type=byte; y=x-40. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液温度";
 CM_ SG_ 2566805053 L_DLDEF "Original: L_DLDEF; bytes=0; type=byte; y=x*0.4. ASSUMED Intel byte order; byte-list length takes precedence. 尿素液位百分比";
-
-
-
-VAL_ 2566867517 DOSER_State 0 "INI，初始化" 1 "PUMP_OFF，泵停止" 2 "PRIMING，填充" 3 "DOSING，喷射" 4 "PURGING，清扫" 5 "DIAG，诊断" ;
-VAL_ 2566867517 DCU_MODE 0 "QTEST" 1 "SLAVE" 2 "VMASTER" 3 "MASTER" ;
-
-
-
+CM_ BO_ 2566889533 "Verified against scr_frame.c frame_disparameter case 31; FRAME_FAI_FLASH; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566889533 Flash_Data_3 "frame_disparameter case 31: bsp_read_data_eeprom(v_wt + 3); byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Data_2 "frame_disparameter case 31: bsp_read_data_eeprom(v_wt + 2); byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Data_1 "frame_disparameter case 31: bsp_read_data_eeprom(v_wt + 1); byte 5..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Data_0 "frame_disparameter case 31: bsp_read_data_eeprom(v_wt + 0); byte 4..4. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Address "frame_disparameter case 31: v_dataview_addr; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Marker_DA "frame_disparameter case 31: 0xDA; byte 1..1. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566889533 Flash_Marker_A0 "frame_disparameter case 31: 0xA0; byte 0..0. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566875197 "Verified against scr_frame.c frame_disparameter case 35; RUNTIME_4; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566875197 Num_T3_EOBD_Doser "frame_disparameter case 35: Num_T3_EOBD_Doser; byte 7..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566875197 Num_T3_Doser "frame_disparameter case 35: Num_T3_Doser; byte 6..6. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566875197 Ave_T3_Doser_Diff "frame_disparameter case 35: Ave_T3_Doser_Diff; byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566875197 Ave_T3_EOBD_Doser "frame_disparameter case 35: Ave_T3_EOBD_Doser; byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566875197 Ave_T3_Doser "frame_disparameter case 35: Ave_T3_Doser; byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566875453 "Verified against scr_frame.c frame_disparameter case 36; RUNTIME_5; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566875453 Sum_T3_EOBD_Doser "frame_disparameter case 36: Sum_T3_EOBD_Doser; byte 4..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566875453 Sum_T3_Doser "frame_disparameter case 36: Sum_T3_Doser; byte 0..3. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566876221 "Verified against scr_frame.c frame_disparameter case 39; RUNTIME_8; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566876221 Test_RunTime "frame_disparameter case 39: Test.run_time_tmp; byte 0..3.";
+CM_ BO_ 2566876477 "Verified against scr_frame.c frame_disparameter case 40; SCREFF1; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566876477 ADC_Channel_3 "frame_disparameter case 40: AD_capture(3); byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876477 ADC_Channel_2 "frame_disparameter case 40: AD_capture(2); byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876477 ADC_Channel_1 "frame_disparameter case 40: AD_capture(1); byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876477 ADC_Channel_0 "frame_disparameter case 40: AD_capture(0); byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566876733 "Verified against scr_frame.c frame_disparameter case 41; SCREFF2; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566876733 ADC_Channel_7 "frame_disparameter case 41: AD_capture(7); byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876733 ADC_Channel_6 "frame_disparameter case 41: AD_capture(6); byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876733 ADC_Channel_5 "frame_disparameter case 41: AD_capture(5); byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876733 ADC_Channel_4 "frame_disparameter case 41: AD_capture(4); byte 0..1. Raw/internal value; physical unit not established.";
+CM_ BO_ 2566876989 "Verified against scr_frame.c frame_disparameter case 42; SCREFF3; Model.idx=0x3D. Reserved/unassigned bytes are zero except explicit 0xFF fields.";
+CM_ SG_ 2566876989 ADC_Channel_11 "frame_disparameter case 42: AD_capture(11); byte 6..7. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876989 ADC_Channel_10 "frame_disparameter case 42: AD_capture(10); byte 4..5. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876989 ADC_Channel_9 "frame_disparameter case 42: AD_capture(9); byte 2..3. Raw/internal value; physical unit not established.";
+CM_ SG_ 2566876989 ADC_Channel_8 "frame_disparameter case 42: AD_capture(8); byte 0..1. Raw/internal value; physical unit not established.";

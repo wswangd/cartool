@@ -154,7 +154,7 @@ class SimulatePanel(QWidget):
         self.progress_label = QLabel("")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 6, 0, 0)
         layout.addLayout(toolbar)
         layout.addWidget(self.preview, 1)
         layout.addWidget(self.progress_label)

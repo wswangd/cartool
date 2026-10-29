@@ -163,7 +163,7 @@ class _Column:
         self.widget.setMinimumWidth(CARD_WIDTH)
         self.widget.setStyleSheet(
             "QFrame#signalCard { background-color: #FFFFFF; border: 1px solid #D8DDE3; border-radius: 8px; }"
-            "QFrame#signalCard[active=\"false\"] { background-color: #F3F4F6; border-color: #E5E7EB; }")
+            "QFrame#signalCard[active=\"false\"] { background-color: palette(window); border-color: #E5E7EB; }")
         layout = QVBoxLayout(self.widget)
         layout.setContentsMargins(8, 4, 8, 6)
         layout.setSpacing(4)
@@ -404,7 +404,7 @@ class SignalPanel(QWidget):
         self.scroll.viewport().installEventFilter(self)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 6, 0, 0)
         layout.addLayout(top)
         layout.addWidget(self.scroll, 1)
 
@@ -432,7 +432,7 @@ class SignalPanel(QWidget):
             self._drag_scroll_timer = QTimer(self)
             self._drag_scroll_timer.setInterval(40)
             self._drag_scroll_timer.timeout.connect(self._drag_scroll)
-        container.setStyleSheet("QWidget#signalCardsContainer { background-color: #ECEFF1; }")
+        container.setStyleSheet("QWidget#signalCardsContainer { background-color: white; }")
         grid = QGridLayout()
         self._card_grid = grid
         grid.setContentsMargins(2, 2, 2, 2)
