@@ -92,12 +92,26 @@ class MeasurementTests(unittest.TestCase):
         self.panel._toggle()
         self.panel.add_records([TraceRecord.make(TX, CanFrame(256, bytes(8)), 1)])
         self.panel._flush()
-        self.assertEqual(self.card().value_label.text(), "—")
+        self.assertEqual(self.card().value_label.text(), "0")
         self.panel.add_records([TraceRecord.make(RX, CanFrame(256, b"\x00"), 2)])
         self.panel._flush()
         self.assertEqual(self.panel._errors, 1)
         self.panel.set_connected(False)
         self.assertFalse(self.panel._running)
+
+    def test_tx_decode_and_loopback_latest_value(self):
+        self.load()
+        self.panel.set_connected(True)
+        self.panel._toggle()
+        frame = CanFrame(256, bytes.fromhex("D2 04 FF EC 00 00 00 00"))
+        self.panel.add_records([TraceRecord.make(TX, frame, 1)])
+        self.panel._flush()
+        self.assertEqual(self.card().value_label.text(), "123.4")
+        self.assertEqual(self.card("Temp").value_label.text(), "-50")
+        self.panel.add_records([TraceRecord.make(TX, frame, 2), TraceRecord.make(RX, frame, 3)])
+        self.assertEqual(len(self.panel._pending), 1)
+        self.panel._flush()
+        self.assertEqual(self.card().value_label.text(), "123.4")
 
     def test_refresh_period_and_cards(self):
         self.assertEqual(self.panel.update_period.value(), 200)

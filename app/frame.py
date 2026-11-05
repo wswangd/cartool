@@ -158,16 +158,22 @@ class TraceRecord:
     frame: CanFrame
     dev_timestamp: int = 0
     error: bool = False
+    monotonic_ns: int = 0
+    wall_time_ns: int = 0
 
     @staticmethod
     def make(direction: str, frame: CanFrame, seq: int, dev_timestamp: int = 0,
-             error: bool = False) -> TraceRecord:
-        return TraceRecord(seq, time.time(), direction, frame, dev_timestamp, error)
+             error: bool = False, *, monotonic_ns: int | None = None,
+             wall_time_ns: int | None = None) -> TraceRecord:
+        host_ns = time.perf_counter_ns() if monotonic_ns is None else monotonic_ns
+        clock_ns = time.time_ns() if wall_time_ns is None else wall_time_ns
+        return TraceRecord(seq, clock_ns / 1e9, direction, frame, dev_timestamp, error,
+                           host_ns, clock_ns)
 
     @property
     def time_text(self) -> str:
         return time.strftime("%H:%M:%S", time.localtime(self.wall_time)) + \
-            f".{int(self.wall_time * 1000) % 1000:03d}"
+            f".{(self.wall_time_ns // 1000 if self.wall_time_ns else int(self.wall_time * 1000000)) % 1000000:06d}"
 
 
 @dataclass

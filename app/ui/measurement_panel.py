@@ -1,4 +1,4 @@
-"""DBC 信号选择与接收报文实时测量。"""
+"""DBC 信号选择与收发报文实时测量。"""
 
 from pathlib import Path
 import math
@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QGridLayout,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from .widgets import HoverSplitter
-from ..frame import RX
+from ..frame import RX, TX
 from .measurement_card import ElidedLabel, MeasurementCard
 from .merged_scope import MergedScope
 
@@ -50,7 +50,7 @@ class MeasurementPanel(QWidget):
         self.update_period.setValue(200)
         self.update_period.setSuffix(" ms")
         self.update_period.setMinimumWidth(125)
-        self.update_period.setToolTip("控制数值及波形刷新周期，不改变 CAN 报文发送周期")
+        self.update_period.setToolTip("解析发送及接收的数据帧；控制数值及波形刷新周期，不改变 CAN 报文发送周期")
         self.search = QLineEdit()
         self.search.setContextMenuPolicy(Qt.NoContextMenu)
         self.search.setPlaceholderText("搜索报文、ID 或信号")
@@ -276,7 +276,7 @@ class MeasurementPanel(QWidget):
     def _update_interval(self, period: int) -> None:
         self._timer.setInterval(period)
         if self._running:
-            self.status.setText(f"测量中：每 {period}ms 刷新接收报文的最新值及波形。")
+            self.status.setText(f"测量中：每 {period}ms 刷新收发报文的最新值及波形。")
 
     def _tree_context_menu(self, position) -> None:
         menu = QMenu(self.tree)
@@ -649,7 +649,7 @@ class MeasurementPanel(QWidget):
         for record in records:
             frame = record.frame
             key = frame.frame_id, frame.extended
-            if (record.direction == RX and not record.error and not frame.remote
+            if (record.direction in (RX, TX) and not record.error and not frame.remote
                     and key in self._selected_messages):
                 self._pending[key] = record
 

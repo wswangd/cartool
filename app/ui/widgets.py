@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QObject, Qt, QTimer
-from PySide6.QtGui import QPainter
+from PySide6.QtGui import QColor, QCursor, QPainter, QPalette
 from PySide6.QtWidgets import QApplication, QComboBox, QPushButton, QScrollBar, QSplitter, QSplitterHandle, QStyle, QStyledItemDelegate, QStyleOptionViewItem
 
 
@@ -17,12 +17,48 @@ class VerticalScrollBarMenuFilter(QObject):
         return super().eventFilter(watched, event)
 
 
+class HighlightTextDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        styled = QStyleOptionViewItem(option)
+        self.initStyleOption(styled, index)
+        view = styled.widget
+        has_editor = view is not None and view.indexWidget(index) is not None
+        selected = bool(styled.state & QStyle.State_Selected)
+        hovered = False
+        if view is not None:
+            selected = selected or view.selectionModel().isSelected(index)
+            hovered = (not QApplication.instance().property("workspaceTabDragging")
+                       and view.property("hoverHighlight") is not False
+                       and bool(styled.state & QStyle.State_MouseOver)
+                       and view.indexAt(view.viewport().mapFromGlobal(QCursor.pos())) == index)
+        if not selected and not hovered:
+            styled.state &= ~QStyle.State_MouseOver
+            if has_editor:
+                styled.text = ""
+            view.style().drawControl(QStyle.CE_ItemViewItem, styled, painter, view)
+            return
+        painter.save()
+        painter.setClipRect(styled.rect)
+        painter.fillRect(styled.rect, styled.palette.brush(QPalette.Active, QPalette.Highlight))
+        if has_editor:
+            painter.restore()
+            return
+        painter.setPen(QColor("white"))
+        painter.setFont(styled.font)
+        rect = styled.rect.adjusted(4, 0, -4, 0)
+        text = styled.fontMetrics.elidedText(styled.text, styled.textElideMode, rect.width())
+        painter.drawText(rect, int(styled.displayAlignment | Qt.AlignVCenter), text)
+        painter.restore()
+
+
 class CenteredCheckDelegate(QStyledItemDelegate):
     """居中绘制；每次按下（包括双击的第二次按下）切换一次。"""
 
     def paint(self, painter, option, index):
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
+        if opt.widget is not None and opt.widget.property("hoverHighlight") is False:
+            opt.state &= ~QStyle.State_MouseOver
         style = opt.widget.style() if opt.widget else QApplication.style()
         rect = style.subElementRect(QStyle.SE_ItemViewItemCheckIndicator, opt, opt.widget)
         rect.moveCenter(opt.rect.center())
@@ -116,6 +152,8 @@ class ComboDelegate(QStyledItemDelegate):
         from PySide6.QtWidgets import QStyleOptionViewItem
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
+        if opt.widget.property("hoverHighlight") is False:
+            opt.state &= ~QStyle.State_MouseOver
         # 填充单元格背景（处理选中高亮、交替行色等）
         opt.widget.style().drawPrimitive(
             QStyle.PrimitiveElement.PE_PanelItemViewItem, opt, painter, opt.widget)
@@ -158,6 +196,8 @@ class SpinDelegate(QStyledItemDelegate):
         from PySide6.QtWidgets import QStyleOptionViewItem
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
+        if opt.widget.property("hoverHighlight") is False:
+            opt.state &= ~QStyle.State_MouseOver
         opt.widget.style().drawPrimitive(
             QStyle.PrimitiveElement.PE_PanelItemViewItem, opt, painter, opt.widget)
 

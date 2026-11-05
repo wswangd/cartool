@@ -18,6 +18,7 @@ from .frame import RX, TX, CanFrame, TraceRecord
 from .zlgcan_api import ZlgError
 
 PROGRESS_INTERVAL = 0.1
+RECORDS_INTERVAL = 0.05
 STATUS_INTERVAL = 0.5
 FAILURE_INTERVAL = 1.0
 
@@ -69,6 +70,8 @@ class BusWorker(QThread):
         self._last_status = 0.0
         self._last_failure = 0.0
         self._pending_progress: dict[int, int] = {}
+        self._pending_records: list[TraceRecord] = []
+        self._last_records = 0.0
         self._next_immediate_due: float = 0.0  # 即时发送间隔控制
 
     # ------------------------------------------------------------ 界面侧接口
@@ -145,11 +148,13 @@ class BusWorker(QThread):
                 idle &= self._run_periodic(now)
                 idle &= self._run_sequence(time.perf_counter())
                 idle &= self._pump_rx()
+                self._emit_records(time.perf_counter())
                 self._emit_progress(now)
                 self._emit_status(now)
             except ZlgError as exc:
                 self._report_failure(str(exc))
             self._stop.wait(0.002 if not idle else 0.005)
+        self._emit_records(time.perf_counter(), force=True)
         with self._lock:
             self._immediate.clear()
             self._periodic.clear()
@@ -230,18 +235,32 @@ class BusWorker(QThread):
                                             is_error))
             self._rx_total += 1
             self._err_total += 1 if is_error else 0
-        self.records.emit(records)
-        self.counters.emit(self._tx_total, self._rx_total, self._err_total)
+        self._queue_records(records)
         return False
 
     def _transmit(self, frames: list[CanFrame]) -> None:
         if not frames:
             return
+        host_ns = time.perf_counter_ns()
+        clock_ns = time.time_ns()
         sent = self._bus.transmit(frames)
         self._tx_total += sent
-        records = [TraceRecord.make(TX, frame.copy(), next(self._seq))
+        records = [TraceRecord.make(TX, frame.copy(), next(self._seq),
+                                   monotonic_ns=host_ns, wall_time_ns=clock_ns)
                    for frame in frames[:sent]]
-        self.records.emit(records)
+        self._queue_records(records)
+
+    def _queue_records(self, records: list[TraceRecord]) -> None:
+        self._pending_records.extend(records)
+
+    def _emit_records(self, now: float, force: bool = False) -> None:
+        if not force and now - self._last_records < RECORDS_INTERVAL:
+            return
+        self._last_records = now
+        if not self._pending_records:
+            return
+        batch, self._pending_records = self._pending_records, []
+        self.records.emit(batch)
         self.counters.emit(self._tx_total, self._rx_total, self._err_total)
 
     def _emit_progress(self, now: float) -> None:

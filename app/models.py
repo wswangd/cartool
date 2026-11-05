@@ -165,6 +165,8 @@ class SendListModel(QAbstractTableModel):
 
         if role == Qt.CheckStateRole and col == COL_ENABLED:
             return Qt.Checked if item.enabled else Qt.Unchecked
+        if role == Qt.ForegroundRole and self._sending:
+            return QBrush(QColor("#808080"))
         if role == Qt.TextAlignmentRole:
             if col in (COL_ID, COL_DATA, COL_DLC, COL_PERIOD, COL_REPEAT, COL_SENT):
                 return int(Qt.AlignCenter)
@@ -249,9 +251,6 @@ class SendListModel(QAbstractTableModel):
 
 
 # ----------------------------------------------------------------- 报文显示
-
-TRACE_HEADERS = ("序号", "时间", "设备时间戳(us)", "方向", "帧格式", "帧类型", "ID(hex)", "长度",
-                 "数据(hex)")
 
 _COLOR_TX = QColor("#1565C0")
 _COLOR_RX = QColor("#1B1B1B")
@@ -339,22 +338,13 @@ class TraceModel(QAbstractTableModel):
         if role != Qt.DisplayRole:
             return None
 
-        if col == 0:
-            return str(record.seq)
-        if col == 1:
-            return record.time_text
-        if col == 2:
-            return str(record.dev_timestamp) if record.dev_timestamp else ""
-        if col == 3:
-            return record.direction
-        if col == 4:
-            return frame.format_text
-        if col == 5:
-            return "错误帧" if record.error else frame.type_text
-        if col == 6:
-            return format_id(frame.frame_id, frame.extended)
-        if col == 7:
-            return str(frame.dlc)
-        if col == 8:
-            return format_data(frame.payload) if not frame.remote else ""
-        return None
+        if not hasattr(record, "_display_text"):
+            record._display_text = (
+                str(record.seq), record.time_text,
+                str(record.dev_timestamp) if record.dev_timestamp else "",
+                record.direction, frame.format_text,
+                "错误帧" if record.error else frame.type_text,
+                format_id(frame.frame_id, frame.extended), str(frame.dlc),
+                format_data(frame.payload) if not frame.remote else "",
+            )
+        return record._display_text[col] if 0 <= col < len(record._display_text) else None

@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import os
 
-from .widgets import OperationButton
+from .widgets import HighlightTextDelegate, OperationButton
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QFileDialog,
@@ -138,6 +138,8 @@ class SimulatePanel(QWidget):
         self._model = CsvTableModel(self)
         self.preview = QTableView()
         self.preview.setModel(self._model)
+        self.preview.setItemDelegate(HighlightTextDelegate(self.preview))
+        self.preview.setMouseTracking(True)
         self.preview.setAlternatingRowColors(True)
         self.preview.setEditTriggers(QTableView.NoEditTriggers)
         self.preview.setSelectionBehavior(QTableView.SelectRows)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .widgets import OperationButton
+from .widgets import HighlightTextDelegate, OperationButton
 
 from PySide6.QtCore import QEvent, QItemSelectionModel, QPersistentModelIndex, QSize, Qt, Signal
 from PySide6.QtWidgets import (QBoxLayout, QComboBox, QFileDialog, QHBoxLayout, QHeaderView,
@@ -19,6 +19,19 @@ from ..models import (COL_DLC, COL_DATA, COL_ENABLED, COL_FORMAT, COL_ID,
                       COL_TYPE, SendListModel)
 from ..storage import StorageError
 from .widgets import CenteredCheckDelegate, ComboDelegate, SpinDelegate
+
+
+class SendListTable(QTableView):
+    def viewportEvent(self, event):
+        if event.type() in (QEvent.HoverEnter, QEvent.HoverMove, QEvent.HoverLeave):
+            return True
+        return super().viewportEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if not event.buttons():
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
 
 
 class ListPanel(QWidget):
@@ -44,10 +57,14 @@ class ListPanel(QWidget):
     # ------------------------------------------------------------------ 界面
 
     def _build(self) -> None:
-        self.table = QTableView()
+        self.table = SendListTable()
         self.table.setStyleSheet(
             "QTableView::item:selected { color: white; background-color: palette(highlight); }")
         self.table.setModel(self.model)
+        self.table.setItemDelegate(HighlightTextDelegate(self.table))
+        self.table.setProperty("hoverHighlight", False)
+        self.table.setMouseTracking(False)
+        self.table.viewport().setAttribute(Qt.WA_Hover, False)
         self.table.setItemDelegateForColumn(COL_ENABLED, CenteredCheckDelegate(self.table))
         self.table.hideColumn(COL_SENT)
         self.table.setSelectionBehavior(QTableView.SelectRows)
@@ -173,6 +190,8 @@ class ListPanel(QWidget):
                 self.table.openPersistentEditor(self.model.index(row, col))
                 editor = self.table.indexWidget(self.model.index(row, col))
                 if editor is not None:
+                    if isinstance(editor, QSpinBox):
+                        editor.lineEdit().deselect()
                     index = QPersistentModelIndex(self.model.index(row, col))
                     for target in [editor, *editor.findChildren(QWidget)]:
                         target._send_list_index = index
@@ -185,7 +204,7 @@ class ListPanel(QWidget):
             index = getattr(watched, "_send_list_index", None)
             if index is not None and index.isValid():
                 selection = self.table.selectionModel()
-                if not selection.isRowSelected(index.row()):
+                if not selection.isSelected(self.model.index(index.row(), index.column())):
                     flags = QItemSelectionModel.Select | QItemSelectionModel.Rows
                     if not event.modifiers() & (Qt.ControlModifier | Qt.ShiftModifier):
                         flags |= QItemSelectionModel.Clear
@@ -194,7 +213,7 @@ class ListPanel(QWidget):
         return super().eventFilter(watched, event)
 
     def _refresh_editor_selection(self, *args) -> None:
-        selected = {index.row() for index in self.table.selectionModel().selectedRows()}
+        selected = {(index.row(), index.column()) for index in self.table.selectionModel().selectedIndexes()}
         palette = self.table.palette()
         background = palette.highlight().color().name()
         foreground = "#ffffff"
@@ -208,7 +227,9 @@ class ListPanel(QWidget):
                         f"QComboBox, QSpinBox, QLineEdit {{ background-color: {background}; color: {foreground}; }}"
                         f"QComboBox QAbstractItemView {{ background-color: {popup_background}; color: {popup_foreground};"
                         f" selection-background-color: {background}; selection-color: {foreground}; }}"
-                        if row in selected else "")
+                        if (row, column) in selected
+                        else "QComboBox, QSpinBox, QLineEdit { color: #808080; }"
+                        if self._active or self._running else "")
                     if isinstance(editor, QComboBox):
                         # 弹层有独立的容器，不能继承选中单元格的蓝色背景。
                         view = editor.view()
@@ -252,7 +273,7 @@ class ListPanel(QWidget):
         self.table.scrollToBottom()
 
     def _selected_rows(self) -> list[int]:
-        return sorted({index.row() for index in self.table.selectionModel().selectedRows()})
+        return sorted({index.row() for index in self.table.selectionModel().selectedIndexes()})
 
     def _on_remove(self) -> None:
         rows = self._selected_rows()
@@ -521,3 +542,5 @@ class ListPanel(QWidget):
             if button.text() in ("新增", "删除", "清空", "导入"):
                 button.setEnabled(not active)
         self._update_toolbar_layout()
+        self._refresh_editor_selection()
+        self.table.viewport().update()

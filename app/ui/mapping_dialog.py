@@ -182,8 +182,7 @@ class MappingDialog(QDialog):
         hint = QLabel('物理值 = 原始值 × 分辨率 + 偏移；最小/最大/默认/分辨率/偏移均精确到'
                       '小数点后 4 位；状态列不写原始值表示该状态仍用滑杆值；状态支持字节覆盖'
                       '语法：名称@bN=V 表示选中该状态时强制 byte N 写入值 V（如 内部故障@b5=3）。'
-                      '起始bit 范围 0-63。数值框已禁用滚轮，需点击选中后用键盘或上下箭头修改；'
-                      '回车不退出，完成后请点击\u201c确定\u201d保存，ESC 取消。')
+                      '起始bit 范围 0-63。')
         hint.setWordWrap(True)
 
         # --- 报文周期表 ---
@@ -301,7 +300,11 @@ class MappingDialog(QDialog):
                 part += f"@{overrides}"
             state_parts.append(part)
         states = ";".join(state_parts)
-        set_cell(row, 13, QLineEdit(states))
+        states_edit = QLineEdit(states)
+        states_edit.setEnabled(combo_editor.currentIndex() == 1)
+        combo_editor.currentIndexChanged.connect(
+            lambda index, edit=states_edit: edit.setEnabled(index == 1))
+        set_cell(row, 13, states_edit)
 
     def _widget(self, row: int, col: int):
         if col == 0:

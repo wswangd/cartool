@@ -6,10 +6,11 @@ from pathlib import Path
 
 from .widgets import OperationButton
 
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout,
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QCursor, QPalette
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog, QHBoxLayout,
                                QHeaderView, QLabel, QLineEdit, QPushButton,
-                               QSpinBox, QTableView, QVBoxLayout, QWidget)
+                               QSizePolicy, QSpinBox, QStyle, QStyledItemDelegate, QTableView, QVBoxLayout, QWidget)
 
 from .. import storage
 from ..frame import RX, TX, TraceRecord, parse_id
@@ -17,6 +18,34 @@ from ..models import TraceModel
 from ..storage import StorageError
 
 DIRECTIONS = ("全部", "仅接收", "仅发送")
+
+
+class TraceDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        view = option.widget
+        hovered = (not QApplication.instance().property("workspaceTabDragging")
+                   and bool(option.state & QStyle.State_MouseOver)
+                   and view.indexAt(view.viewport().mapFromGlobal(QCursor.pos())) == index)
+        highlighted = bool(option.state & QStyle.State_Selected) or hovered
+        palette = option.palette
+        if highlighted:
+            background = palette.brush(QPalette.Active, QPalette.Highlight)
+            foreground = QColor("white")
+        else:
+            background = palette.alternateBase() if index.row() % 2 else palette.base()
+            foreground = index.data(Qt.ForegroundRole) or palette.text()
+        painter.save()
+        painter.setClipRect(option.rect)
+        painter.fillRect(option.rect, background)
+        painter.setPen(foreground.color() if hasattr(foreground, "color") else foreground)
+        painter.setFont(option.font)
+        rect = option.rect.adjusted(4, 0, -4, 0)
+        text = str(index.data(Qt.DisplayRole) or "")
+        if option.fontMetrics.horizontalAdvance(text) > rect.width():
+            text = option.fontMetrics.elidedText(text, Qt.ElideRight, rect.width())
+        alignment = Qt.AlignLeft if index.column() == 8 else Qt.AlignHCenter
+        painter.drawText(rect, int(alignment | Qt.AlignVCenter), text)
+        painter.restore()
 
 
 class TracePanel(QWidget):
@@ -48,7 +77,9 @@ class TracePanel(QWidget):
 
         self.filter_edit = QLineEdit()
         self.filter_edit.setPlaceholderText("过滤 ID，多个用逗号分隔，留空不过滤")
-        self.filter_edit.setFixedWidth(240)
+        self.filter_edit.setMinimumWidth(80)
+        self.filter_edit.setMaximumWidth(320)
+        self.filter_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.filter_edit.setClearButtonEnabled(True)
 
         self.capacity = QSpinBox()
@@ -58,6 +89,8 @@ class TracePanel(QWidget):
         self.capacity.setSuffix(" 行")
 
         self.info_label = QLabel("")
+        self.info_label.setMinimumWidth(0)
+        self.info_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.info_label.setStyleSheet("color:#616161;")
 
         toolbar = QHBoxLayout()
@@ -70,16 +103,16 @@ class TracePanel(QWidget):
         toolbar.addWidget(QLabel("方向"))
         toolbar.addWidget(self.direction)
         toolbar.addWidget(QLabel("过滤"))
-        toolbar.addWidget(self.filter_edit)
+        toolbar.addWidget(self.filter_edit, 1)
         toolbar.addWidget(QLabel("容量"))
         toolbar.addWidget(self.capacity)
         toolbar.addStretch(1)
         toolbar.addWidget(self.info_label)
 
         self.table = QTableView()
-        self.table.setStyleSheet(
-            "QTableView::item:selected { color: white; background-color: palette(highlight); }")
         self.table.setModel(self.model)
+        self.table.setItemDelegate(TraceDelegate(self.table))
+        self.table.setMouseTracking(True)
         self.table.setSelectionBehavior(QTableView.SelectRows)
         self.table.setAlternatingRowColors(True)
         self.table.setWordWrap(False)
@@ -92,7 +125,8 @@ class TracePanel(QWidget):
         header.setFont(header_font)
         header.setSectionResizeMode(QHeaderView.Interactive)
         header.setSectionResizeMode(8, QHeaderView.Stretch)
-        for column, width in ((0, 66), (1, 96), (2, 92), (3, 48), (4, 66),
+        self.table.setToolTip("时间为软件记录时间，非总线实际发送时间；界面每50ms批量更新，逐帧时间独立记录。")
+        for column, width in ((0, 66), (1, 140), (2, 92), (3, 48), (4, 66),
                               (5, 66), (6, 96), (7, 48)):
             header.resizeSection(column, width)
 
@@ -121,7 +155,7 @@ class TracePanel(QWidget):
             self._update_info()
             return
         self.model.append(accepted)
-        if self.autoscroll.isChecked() and not self.table.selectionModel().selectedRows():
+        if self.autoscroll.isChecked():
             self.table.scrollToBottom()
         self._update_info()
 
@@ -168,6 +202,7 @@ class TracePanel(QWidget):
         if self.model.dropped:
             text += f"  |  滚动丢弃 {self.model.dropped}"
         self.info_label.setText(text)
+        self.info_label.setToolTip(text)
 
     def clear(self) -> None:
         self._hidden = 0

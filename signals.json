@@ -42,7 +42,7 @@
       "min": 0,
       "max": 251,
       "default": 0,
-      "enabled": true,
+      "enabled": false,
       "can_id": "0CFE6CEE",
       "extended": true,
       "start_bit": 48,
@@ -341,7 +341,7 @@
       "bit_length": 8,
       "byte_order": "Intel",
       "factor": 1,
-      "offset": 0,
+      "offset": -40,
       "editor": "state",
       "states": [
         {
@@ -476,7 +476,7 @@
       "min": 0,
       "max": 125,
       "default": 100,
-      "enabled": false,
+      "enabled": true,
       "can_id": "18FEF500",
       "extended": true,
       "start_bit": 0,
