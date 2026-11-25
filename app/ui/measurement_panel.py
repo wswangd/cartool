@@ -9,6 +9,7 @@ from .widgets import OperationButton
 
 from PySide6.QtCore import QEvent, QRect, Qt, QTimer, Signal
 from PySide6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QGridLayout,
+                               QAbstractItemView, QDialog, QDialogButtonBox, QListWidget, QListWidgetItem,
                                QLabel, QLineEdit, QMenu, QMessageBox, QPushButton, QScrollArea,
                                QSizePolicy, QSpinBox,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
@@ -231,6 +232,7 @@ class MeasurementPanel(QWidget):
                 card.merge_requested.connect(self._confirm_merge)
                 card.move_out_requested.connect(lambda member, owner=(key,signal.name): self._move_out_signal(owner,member))
                 card.unmerge_requested.connect(lambda signal_key=(key,signal.name): self._unmerge(signal_key))
+                card.sort_signals_requested.connect(lambda signal_key=(key,signal.name): self._sort_merged_signals(signal_key))
                 card.insert_requested.connect(self._insert_cards)
                 card.resized.connect(self._relayout_cards)
                 self._items[key, signal.name] = item
@@ -414,6 +416,61 @@ class MeasurementPanel(QWidget):
 
     def _remove_measurement(self, key):
         keys = list(self._merge_groups.get(key,[key]))
+        if key in self._merge_groups:
+            dialog = QDialog(self)
+            dialog.setWindowTitle("删除测量信号")
+            layout = QVBoxLayout(dialog)
+            layout.addWidget(QLabel("请选择要从测量区删除的信号"))
+            signals = QListWidget(dialog)
+            for signal_key in keys:
+                card = self._cards[signal_key]
+                item = QListWidgetItem(f"{card.name}  {card.unit}", signals)
+                item.setCheckState(Qt.Unchecked)
+            layout.addWidget(signals)
+            selection = QHBoxLayout()
+            for text, state in (("全选", Qt.Checked), ("全不选", Qt.Unchecked)):
+                button = QPushButton(text)
+                def check_all(checked=False, value=state):
+                    for row in range(signals.count()):
+                        signals.item(row).setCheckState(value)
+                button.clicked.connect(check_all)
+                selection.addWidget(button)
+            layout.addLayout(selection)
+            buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            buttons.button(QDialogButtonBox.Ok).setText("删除")
+            buttons.button(QDialogButtonBox.Ok).setEnabled(False)
+            signals.itemChanged.connect(lambda item: buttons.button(QDialogButtonBox.Ok).setEnabled(
+                any(signals.item(i).checkState() == Qt.Checked for i in range(signals.count()))))
+            buttons.accepted.connect(dialog.accept)
+            buttons.rejected.connect(dialog.reject)
+            layout.addWidget(buttons)
+            dialog.resize(360, 320)
+            if dialog.exec() != QDialog.Accepted:
+                return
+            removed = [signal_key for row, signal_key in enumerate(keys)
+                       if signals.item(row).checkState() == Qt.Checked]
+            if not removed:
+                return
+            remaining = [signal_key for signal_key in keys if signal_key not in removed]
+            card = self._cards[key]
+            hidden = set(card._merged_plot.hidden_cards)
+            sizes = dict(card._custom_sizes)
+            position = self._card_order.index(key)
+            self._unmerge(key, relayout=False)
+            if remaining:
+                new_owner = remaining[0]
+                if self._card_order.index(new_owner) < position:
+                    position -= 1
+                self._card_order.remove(new_owner)
+                self._card_order.insert(position, new_owner)
+                for member in remaining[1:]:
+                    self._merge_signals(member, new_owner)
+                if len(remaining) > 1:
+                    target = self._cards[new_owner]
+                    target._custom_sizes = sizes
+                    for member, check in zip(remaining, target._wave_checks):
+                        check.setChecked(id(self._cards[member]) not in hidden)
+            keys = removed
         self.tree.blockSignals(True)
         for signal_key in keys:
             self._items[signal_key].setCheckState(0,Qt.Unchecked)
@@ -554,6 +611,67 @@ class MeasurementPanel(QWidget):
         from PySide6.QtCore import QSize
         target._custom_sizes[True] = QSize(max(500,target.width()),100+160*(1 if len({self._cards[key].unit for key in keys}) == 2 else len({self._cards[key].unit for key in keys})))
         self._layout_cards()
+
+    def _sort_merged_signals(self, owner):
+        keys = list(self._merge_groups.get(owner, []))
+        if len(keys) < 2:
+            return
+        dialog = QDialog(self)
+        dialog.setWindowTitle("信号排序")
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(QLabel("拖动信号或使用上下按钮调整显示顺序"))
+        signals = QListWidget(dialog)
+        signals.setDragDropMode(QAbstractItemView.InternalMove)
+        for key in keys:
+            card = self._cards[key]
+            item = QListWidgetItem(f"{card.name}  {card.unit}", signals)
+            item.setData(Qt.UserRole, key)
+        signals.setCurrentRow(0)
+        layout.addWidget(signals)
+        actions = QHBoxLayout()
+        def move(delta):
+            row = signals.currentRow()
+            destination = row + delta
+            if 0 <= row < signals.count() and 0 <= destination < signals.count():
+                item = signals.takeItem(row)
+                signals.insertItem(destination, item)
+                signals.setCurrentRow(destination)
+        for text, delta in (("上移", -1), ("下移", 1)):
+            button = QPushButton(text)
+            button.clicked.connect(lambda checked=False, step=delta: move(step))
+            actions.addWidget(button)
+        layout.addLayout(actions)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.resize(360, 320)
+        if dialog.exec() == QDialog.Accepted:
+            self._reorder_merged_signals(owner, [signals.item(i).data(Qt.UserRole) for i in range(signals.count())])
+
+    def _reorder_merged_signals(self, owner, keys):
+        # Qt may convert nested tuple user data into lists.
+        keys = [(tuple(key[0]), key[1]) for key in keys]
+        original = self._merge_groups.get(owner, [])
+        if keys == original or len(keys) != len(original) or set(keys) != set(original):
+            return
+        card = self._cards[owner]
+        hidden = set(card._merged_plot.hidden_cards)
+        sizes = dict(card._custom_sizes)
+        position = self._card_order.index(owner)
+        self._unmerge(owner, relayout=False)
+        new_owner = keys[0]
+        if self._card_order.index(new_owner) < position:
+            position -= 1
+        self._card_order.remove(new_owner)
+        self._card_order.insert(position, new_owner)
+        for key in keys[1:]:
+            self._merge_signals(key, new_owner)
+        target = self._cards[new_owner]
+        target._custom_sizes = sizes
+        for key, check in zip(keys, target._wave_checks):
+            check.setChecked(id(self._cards[key]) not in hidden)
+        self._filter()
 
     def _set_group_wave_visible(self, owner, member, visible):
         plot = owner._merged_plot

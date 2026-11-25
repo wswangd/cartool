@@ -75,6 +75,7 @@ class MeasurementCard(QFrame):
     remove_requested = Signal()
     merge_requested = Signal(object, object)
     unmerge_requested = Signal()
+    sort_signals_requested = Signal()
     selection_requested = Signal(object, bool)
     merge_selection_requested = Signal()
     auto_size_requested = Signal()
@@ -271,6 +272,7 @@ class MeasurementCard(QFrame):
             menu.addAction("合并选中信号", self.merge_selection_requested.emit)
             menu.addSeparator()
         if self._merged_plot is not None:
+            menu.addAction("信号排序", self.sort_signals_requested.emit)
             move_menu = menu.addMenu("移出信号")
             for member in self._merged_plot.cards:
                 move_menu.addAction(member.name, lambda checked=False, c=member: self.move_out_requested.emit(c))

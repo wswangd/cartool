@@ -520,6 +520,69 @@ class MeasurementTests(unittest.TestCase):
         self.assertTrue(source.isHidden())
         self.assertIsNotNone(target._merged_plot)
 
+    def test_reorder_merged_signals_preserves_samples_visibility_and_size(self):
+        self.load()
+        speed_key, temp_key = ((256,False),'Speed'), ((256,False),'Temp')
+        speed, temp = self.card(), self.card('Temp')
+        self.panel._merge_signals(speed_key, temp_key)
+        speed.scope.append(100, 42)
+        temp.scope.append(100, 25)
+        samples = list(speed.scope.samples)
+        size = dict(temp._custom_sizes)
+        temp._wave_checks[1].setChecked(False)
+        self.panel._reorder_merged_signals(temp_key, [speed_key, temp_key])
+        self.assertEqual(self.panel._merge_groups[speed_key], [speed_key, temp_key])
+        self.assertEqual(speed._merged_plot.cards, [speed, temp])
+        self.assertEqual(list(speed.scope.samples), samples)
+        self.assertEqual(speed._custom_sizes, size)
+        self.assertFalse(speed._wave_checks[0].isChecked())
+        self.assertIn(id(speed), speed._merged_plot.hidden_cards)
+        self.assertTrue(speed._wave_checks[1].isChecked())
+        self.assertFalse(hasattr(speed, '_sort_signals_button'))
+        self.panel._unmerge(speed_key)
+        self.assertFalse(self.panel._merge_groups)
+        self.assertIsNone(speed._merged_plot)
+
+    def test_delete_from_merged_card_selects_signals(self):
+        from PySide6.QtWidgets import QDialog, QListWidget, QPushButton, QDialogButtonBox
+        self.load()
+        speed_key, temp_key = ((256,False),'Speed'), ((256,False),'Temp')
+        self.panel._merge_signals(speed_key, temp_key)
+        self.card().scope.append(100, 42)
+        def choose(dialog):
+            signals = dialog.findChild(QListWidget)
+            buttons = dialog.findChild(QDialogButtonBox)
+            self.assertFalse(buttons.button(QDialogButtonBox.Ok).isEnabled())
+            actions = {button.text(): button for button in dialog.findChildren(QPushButton)}
+            actions['全选'].click()
+            self.assertTrue(all(signals.item(i).checkState() == Qt.Checked for i in range(signals.count())))
+            actions['全不选'].click()
+            self.assertFalse(buttons.button(QDialogButtonBox.Ok).isEnabled())
+            signals.item(0).setCheckState(Qt.Checked)  # remove owner, retain other signal
+            return QDialog.Accepted
+        with patch.object(QDialog, 'exec', choose):
+            self.panel._remove_measurement(temp_key)
+        self.assertEqual(self.panel._items[temp_key].checkState(0), Qt.Unchecked)
+        self.assertEqual(self.panel._items[speed_key].checkState(0), Qt.Checked)
+        self.assertFalse(self.panel._merge_groups)
+        self.assertEqual(self.card().scope.samples[-1][1], 42)
+
+    def test_delete_merged_cancel_and_delete_all(self):
+        from PySide6.QtWidgets import QDialog, QPushButton
+        self.load()
+        speed_key, temp_key = ((256,False),'Speed'), ((256,False),'Temp')
+        self.panel._merge_signals(speed_key, temp_key)
+        with patch.object(QDialog, 'exec', return_value=QDialog.Rejected):
+            self.panel._remove_measurement(temp_key)
+        self.assertEqual(len(self.panel._merge_groups[temp_key]), 2)
+        def choose_all(dialog):
+            next(b for b in dialog.findChildren(QPushButton) if b.text() == '全选').click()
+            return QDialog.Accepted
+        with patch.object(QDialog, 'exec', choose_all):
+            self.panel._remove_measurement(temp_key)
+        self.assertFalse(self.panel._merge_groups)
+        self.assertTrue(all(self.panel._items[k].checkState(0) == Qt.Unchecked for k in (speed_key, temp_key)))
+
     def test_merge_waveforms_preserves_samples_and_unmerges(self):
         self.load()
         source,target = self.card(),self.card("Temp")

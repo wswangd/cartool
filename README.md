@@ -1,7 +1,16 @@
 # CANTool — 自定义 CAN 报文发送工具
 
 Windows 下的 CAN 报文收发与发送工具，界面参照 CANTest 布局，支持完全自定义的报文内容、
-批量发送和多路定时（周期）发送。底层对接周立功 ZLG USBCAN 系列（`zlgcan.dll`）。
+批量发送和多路定时（周期）发送。底层对接周立功 ZLG USBCAN 系列（`zlgcan.dll`）
+及创芯科技 CANalyst-II（64 位 `ControlCAN.dll`）。
+
+CANalyst-II 使用：设备连接的“接口”选择“创芯科技 CANalyst-II”，选择 CAN1 或 CAN2、
+索引和波特率后打开设备。连接成功后显示设备实际返回的型号、序列号、通道数、硬件、
+固件、驱动及动态库版本。对应 SDK 独立保存在 `lib/canalyst/`，避免与 ZLG 同名驱动混用；
+打包时须保留整个目录。已通过模拟驱动测试及 CANalyst-II 实机打开、硬件信息读取验证，
+实际通道收发仍需现场验证。DLL 来源为创芯官方二次开发包（20250326），厂商信息应为
+“珠海创芯科技有限公司”，本项目使用 x64 版本 9.1.2.1；同名的致远 ControlCAN.dll 不可混用。
+官方资料下载：https://www.cxcan.com/1.html 。
 
 ## 功能
 

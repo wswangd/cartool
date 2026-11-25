@@ -53,7 +53,7 @@ class MergedScope(SignalScope):
             margin = (high-low)*.1 or max(abs(low)*.1,1)
             low,high = low-margin,high+margin
             painter.setPen(QColor('#687568'))
-            painter.drawText(QRectF(plot.left(),top,plot.width(),18),Qt.AlignRight if dual_axis and lane == 1 else Qt.AlignLeft,unit or '无单位')
+            painter.drawText(QRectF(plot.left(),top,plot.width(),18),Qt.AlignRight if dual_axis and lane == 1 else Qt.AlignLeft,unit or '')
             axis_x = plot.right() if dual_axis and lane == 1 else plot.left()
             painter.drawLine(QPointF(axis_x,plot.top()),QPointF(axis_x,plot.bottom()))
             for j in range(5):

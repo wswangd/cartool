@@ -13,7 +13,8 @@ from .zlgcan_api import (BAUD_TIMING, DEVICE_TYPES, MODE_NAMES, ZcanApi, ZlgErro
 
 BACKEND_ZLG = "zlg"
 BACKEND_SIM = "sim"
-BACKEND_NAMES = {BACKEND_ZLG: "ZLG USBCAN", BACKEND_SIM: "仿真回环"}
+BACKEND_CANALYST = "canalyst"
+BACKEND_NAMES = {BACKEND_ZLG: "ZLG USBCAN", BACKEND_CANALYST: "创芯科技 CANalyst-II", BACKEND_SIM: "仿真回环"}
 
 ReceivedFrame = tuple[CanFrame, int, bool]
 
@@ -46,6 +47,8 @@ class BusConfig:
             return f"仿真回环 CH{self.channel} {self.baud}"
         names = dict(DEVICE_TYPES)
         dev = names.get(self.device_type, f"设备类型{self.device_type}")
+        if self.backend == BACKEND_CANALYST:
+            dev = "CANalyst-II"
         mode = MODE_NAMES.get(self.mode, str(self.mode))
         return f"{dev}[{self.device_index}] CH{self.channel} {self.baud} {mode}"
 
@@ -227,4 +230,7 @@ class SimBus(BusBackend):
 def create_bus(config: BusConfig, api: ZcanApi | None = None) -> BusBackend:
     if config.backend == BACKEND_SIM:
         return SimBus(config)
+    if config.backend == BACKEND_CANALYST:
+        from .canalyst_bus import CanalystBus
+        return CanalystBus(config)
     return ZlgBus(config, api)

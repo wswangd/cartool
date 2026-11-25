@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QGroupBox, QLabel, QMainWindow, QMessageBox,
                                QTabWidget, QVBoxLayout, QWidget)
 
 from .. import signals, storage
-from ..bus import BACKEND_SIM, BusBackend, BusConfig, create_bus
+from ..bus import BACKEND_SIM, BACKEND_ZLG, BusBackend, BusConfig, create_bus
 from .widgets import HoverSplitter
 from ..frame import CanFrame
 from ..storage import StorageError
@@ -176,7 +176,7 @@ class MainWindow(QMainWindow):
 
     def _on_connect(self) -> None:
         cfg = self.device_panel.config()
-        if self._api is None and cfg.backend != BACKEND_SIM:
+        if self._api is None and cfg.backend == BACKEND_ZLG:
             try:
                 self._api = ZcanApi()
             except (ZlgError, OSError) as exc:

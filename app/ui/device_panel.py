@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QSpinBox,
                                QVBoxLayout, QWidget)
 
-from ..bus import BACKEND_NAMES, BACKEND_SIM, BACKEND_ZLG, BusConfig
+from ..bus import BACKEND_NAMES, BACKEND_SIM, BACKEND_ZLG, BACKEND_CANALYST, BusConfig
 from ..zlgcan_api import BAUD_OPTIONS, BAUD_TIMING, DEVICE_TYPES, MODE_NAMES
 
 CHANNELS = ("CAN1", "CAN2", "CAN3", "CAN4")
@@ -140,8 +140,21 @@ class DevicePanel(QGroupBox):
 
     def _on_backend_changed(self) -> None:
         is_zlg = self.backend.currentData() == BACKEND_ZLG
-        for widget in (self.device_type, self.device_index):
-            widget.setEnabled(is_zlg and not self._connected)
+        is_canalyst = self.backend.currentData() == BACKEND_CANALYST
+        current = self.device_type.currentData()
+        types = ((4, "CANalyst-II"),) if is_canalyst else DEVICE_TYPES
+        if self.device_type.itemText(0) != f"{types[0][1]} ({types[0][0]})":
+            self.device_type.clear()
+            for value, name in types:
+                self.device_type.addItem(f"{name} ({value})", value)
+            index = self.device_type.findData(current)
+            self.device_type.setCurrentIndex(max(0, index))
+        self.device_type.setEnabled(is_zlg and not self._connected)
+        self.device_index.setEnabled((is_zlg or is_canalyst) and not self._connected)
+        for index in range(self.channel.count()):
+            self.channel.model().item(index).setEnabled(not is_canalyst or index < 2)
+        if is_canalyst and self.channel.currentIndex() > 1:
+            self.channel.setCurrentIndex(0)
         self.channel.setEnabled(not self._connected)
 
     def _on_baud_changed(self, text: str) -> None:
@@ -180,7 +193,7 @@ class DevicePanel(QGroupBox):
         else:
             timing0, timing1 = BAUD_TIMING[self.baud.currentText()]
         return BusConfig(
-            backend=BACKEND_ZLG,
+            backend=backend,
             device_type=self.device_type.currentData(),
             device_index=self.device_index.value(),
             channel=self.channel.currentIndex(),
